@@ -275,9 +275,10 @@ const RestTimer = ({ duration, onComplete, onAddTime, onSkip }) => {
   );
 };
 
-const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
+const ExerciseLibrary = ({ exercises, onAddExercise, onEditExercise, onDeleteExercise, onClose }) => {
   const [newExercise, setNewExercise] = useState({ name: '', muscle: 'pernas', reps: '8-10', weight: '0 kg', image: '' });
-  const [imageInputType, setImageInputType] = useState('url'); // 'url' ou 'file'
+  const [imageInputType, setImageInputType] = useState('url');
+  const [editingId, setEditingId] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleImageUpload = (event) => {
@@ -293,11 +294,33 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
 
   const handleSubmit = () => {
     if (newExercise.name.trim()) {
-      onAddExercise({
-        ...newExercise,
-        id: Date.now()
-      });
+      if (editingId) {
+        onEditExercise({ ...newExercise, id: editingId });
+      } else {
+        onAddExercise({ ...newExercise, id: Date.now() });
+      }
       setNewExercise({ name: '', muscle: 'pernas', reps: '8-10', weight: '0 kg', image: '' });
+      setEditingId(null);
+    }
+  };
+
+  const handleEditClick = (exercise) => {
+    setNewExercise({
+      name: exercise.name,
+      muscle: exercise.muscle,
+      reps: exercise.reps,
+      weight: exercise.weight,
+      image: exercise.image || ''
+    });
+    setEditingId(exercise.id);
+    setImageInputType(exercise.image ? 'url' : 'url');
+  };
+
+  const handleDelete = (id) => {
+    onDeleteExercise(id);
+    if (editingId === id) {
+      setNewExercise({ name: '', muscle: 'pernas', reps: '8-10', weight: '0 kg', image: '' });
+      setEditingId(null);
     }
   };
 
@@ -319,7 +342,6 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
             onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
             className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
           />
-          
           <select
             value={newExercise.muscle}
             onChange={(e) => setNewExercise(prev => ({ ...prev, muscle: e.target.value }))}
@@ -334,25 +356,22 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
             <option value="cardio">Cardio</option>
             <option value="funcional">Funcional</option>
           </select>
-
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <input
               type="text"
               placeholder="Repetições"
               value={newExercise.reps}
               onChange={(e) => setNewExercise(prev => ({ ...prev, reps: e.target.value }))}
-              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
             />
             <input
               type="text"
               placeholder="Peso"
               value={newExercise.weight}
               onChange={(e) => setNewExercise(prev => ({ ...prev, weight: e.target.value }))}
-              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
             />
           </div>
-
-          {/* Seletor de tipo de imagem */}
           <div className="flex gap-2">
             <button
               onClick={() => setImageInputType('url')}
@@ -375,8 +394,6 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
               Upload de Arquivo
             </button>
           </div>
-
-          {/* Campo de imagem */}
           {imageInputType === 'url' ? (
             <input
               type="url"
@@ -402,8 +419,6 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
               </button>
             </div>
           )}
-
-          {/* Preview da imagem */}
           {newExercise.image && (
             <div className="w-full h-32 rounded-lg overflow-hidden bg-white/5">
               <img 
@@ -416,15 +431,13 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
               />
             </div>
           )}
-
           <PillButton onClick={handleSubmit} variant="primary" className="w-full">
-            Adicionar Exercício
+            {editingId ? 'Salvar Alterações' : 'Adicionar Exercício'}
           </PillButton>
         </div>
-
-        <div className="space-y-2 max-h-60 overflow-y-auto">
+        <div className="space-y-2 max-h-60 overflow-y-auto scrollbar-hide">
           {exercises.map(exercise => (
-            <div key={exercise.id} className="bg-white/5 rounded-lg p-3 text-white flex gap-3">
+            <div key={exercise.id} className="bg-white/5 rounded-lg p-3 text-white flex gap-3 items-center cursor-pointer hover:bg-white/10 transition-colors group" onClick={() => handleEditClick(exercise)}>
               {exercise.image && (
                 <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
                   <img 
@@ -441,6 +454,13 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
                 <div className="font-medium truncate">{exercise.name}</div>
                 <div className="text-sm text-gray-400 truncate">{exercise.reps} reps - {exercise.weight}</div>
               </div>
+              <button
+                className="ml-2 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 rounded hover:bg-red-500 hover:text-white"
+                onClick={e => { e.stopPropagation(); handleDelete(exercise.id); }}
+                title="Deletar exercício"
+              >
+                ×
+              </button>
             </div>
           ))}
         </div>
@@ -547,6 +567,22 @@ const KanbanWorkoutApp = () => {
     setExercises(prev => [...prev, newExercise]);
   };
 
+  const handleEditExercise = (edited) => {
+    setExercises(prev => prev.map(ex => ex.id === edited.id ? edited : ex));
+  };
+
+  const handleDeleteExercise = (id) => {
+    setExercises(prev => prev.filter(ex => ex.id !== id));
+    // Remover dos treinos do plano também
+    setWorkoutPlan(prev => {
+      const novo = {};
+      for (const dia in prev) {
+        novo[dia] = prev[dia].filter(item => item.exerciseId !== id);
+      }
+      return novo;
+    });
+  };
+
   const getExerciseById = (id) => exercises.find(ex => ex.id === id);
 
   return (
@@ -612,6 +648,8 @@ const KanbanWorkoutApp = () => {
         <ExerciseLibrary
           exercises={exercises}
           onAddExercise={handleAddExercise}
+          onEditExercise={handleEditExercise}
+          onDeleteExercise={handleDeleteExercise}
           onClose={() => setShowLibrary(false)}
         />
       )}
