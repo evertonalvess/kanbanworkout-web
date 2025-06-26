@@ -402,6 +402,36 @@ const BibliotecaScreen = (props) => {
   const idsDoDia = (props.workoutPlan[props.selectedDay] || []).map(item => item.exerciseId);
   const exerciciosDoDia = props.exercises.filter(ex => idsDoDia.includes(ex.id));
 
+  // Função para fazer parsing dos dados existentes
+  const parseExerciseData = (exercise) => {
+    let sets = '';
+    let reps = '';
+    
+    // Se já tem os campos separados, usa eles
+    if (exercise.sets && exercise.reps) {
+      sets = exercise.sets;
+      reps = exercise.reps;
+    } else if (exercise.reps) {
+      // Faz parsing do formato "4 × 10" ou "4 × 8-10"
+      const repsMatch = exercise.reps.match(/^(\d+)\s*×\s*(.+)$/);
+      if (repsMatch) {
+        sets = repsMatch[1]; // "4"
+        reps = repsMatch[2]; // "10" ou "8-10"
+      } else {
+        // Se não tem o formato esperado, mantém como está
+        reps = exercise.reps;
+        sets = '3'; // valor padrão
+      }
+    }
+    
+    return {
+      sets: sets || '',
+      reps: reps || '',
+      weight: exercise.weight || '',
+      restTime: exercise.restTime || '60'
+    };
+  };
+
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -447,13 +477,15 @@ const BibliotecaScreen = (props) => {
   };
 
   const handleEditClick = (exercise) => {
+    const parsedData = parseExerciseData(exercise);
+    
     setNewExercise({
       name: exercise.name,
       muscle: exercise.muscle,
-      reps: exercise.reps || '',
-      sets: exercise.sets || '',
-      weight: exercise.weight || '',
-      restTime: exercise.restTime || '60',
+      reps: parsedData.reps,
+      sets: parsedData.sets,
+      weight: parsedData.weight,
+      restTime: parsedData.restTime,
       image: exercise.image || ''
     });
     setEditingId(exercise.id);
@@ -672,6 +704,7 @@ const BibliotecaScreen = (props) => {
           {exerciciosDoDia.map(exercise => {
             const workoutItem = (props.workoutPlan[props.selectedDay] || []).find(item => item.exerciseId === exercise.id);
             const sets = workoutItem ? workoutItem.sets : 3;
+            const parsedData = parseExerciseData(exercise);
             return (
               <div
                 key={exercise.id}
@@ -693,7 +726,7 @@ const BibliotecaScreen = (props) => {
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-lg truncate">{exercise.name}</div>
                   <div className="text-sm text-gray-400 truncate">
-                    {sets} × {exercise.reps || '8-10'} reps - {exercise.weight || '0 kg'}
+                    {sets} × {parsedData.reps || '8-10'} reps - {parsedData.weight || '0 kg'}
                   </div>
                   <div className="text-xs text-blue-400 mt-1 capitalize">{exercise.muscle}</div>
                 </div>
