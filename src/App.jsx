@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Info, Check, Play, Pause, SkipForward, Clock } from 'lucide-react';
+import { Plus, Info, Check, Play, Pause, SkipForward, Clock, Trash } from 'lucide-react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 
 // Tokens do Sistema de Design
 const theme = {
@@ -275,11 +276,15 @@ const RestTimer = ({ duration, onComplete, onAddTime, onSkip }) => {
   );
 };
 
-const ExerciseLibrary = ({ exercises, onAddExercise, onEditExercise, onDeleteExercise, onClose }) => {
+const ExerciseLibrary = ({ exercises, onAddExercise, onEditExercise, onDeleteExercise, selectedDay, setSelectedDay, workoutPlan, setWorkoutPlan, onClose }) => {
   const [newExercise, setNewExercise] = useState({ name: '', muscle: 'pernas', reps: '8-10', weight: '0 kg', image: '' });
   const [imageInputType, setImageInputType] = useState('url');
   const [editingId, setEditingId] = useState(null);
   const fileInputRef = useRef(null);
+
+  // Filtrar exercícios do dia
+  const idsDoDia = (workoutPlan[selectedDay] || []).map(item => item.exerciseId);
+  const exerciciosDoDia = exercises.filter(ex => idsDoDia.includes(ex.id));
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -294,11 +299,21 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onEditExercise, onDeleteExe
 
   const handleSubmit = () => {
     if (newExercise.name.trim()) {
+      let newId = editingId ? editingId : Date.now();
       if (editingId) {
         onEditExercise({ ...newExercise, id: editingId });
       } else {
-        onAddExercise({ ...newExercise, id: Date.now() });
+        onAddExercise({ ...newExercise, id: newId });
       }
+      // Atualiza o plano do dia
+      setWorkoutPlan(prev => {
+        const atual = prev[selectedDay] || [];
+        if (!editingId) {
+          return { ...prev, [selectedDay]: [...atual, { exerciseId: newId, sets: 3, completedSets: 0 }] };
+        } else {
+          return { ...prev, [selectedDay]: atual.map(item => item.exerciseId === editingId ? { ...item, exerciseId: editingId } : item) };
+        }
+      });
       setNewExercise({ name: '', muscle: 'pernas', reps: '8-10', weight: '0 kg', image: '' });
       setEditingId(null);
     }
@@ -318,6 +333,11 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onEditExercise, onDeleteExe
 
   const handleDelete = (id) => {
     onDeleteExercise(id);
+    setWorkoutPlan(prev => {
+      const novo = { ...prev };
+      novo[selectedDay] = (novo[selectedDay] || []).filter(item => item.exerciseId !== id);
+      return novo;
+    });
     if (editingId === id) {
       setNewExercise({ name: '', muscle: 'pernas', reps: '8-10', weight: '0 kg', image: '' });
       setEditingId(null);
@@ -434,10 +454,22 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onEditExercise, onDeleteExe
           <PillButton onClick={handleSubmit} variant="primary" className="w-full">
             {editingId ? 'Salvar Alterações' : 'Adicionar Exercício'}
           </PillButton>
+          {editingId && (
+            <button
+              onClick={() => { setEditingId(null); setNewExercise({ name: '', muscle: 'pernas', reps: '8-10', weight: '0 kg', image: '' }); }}
+              className="w-full mt-2 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white hover:bg-white/20 transition-colors focus:outline-none focus:border-blue-500"
+            >
+              Cancelar edição
+            </button>
+          )}
         </div>
         <div className="space-y-2 max-h-60 overflow-y-auto scrollbar-hide">
-          {exercises.map(exercise => (
-            <div key={exercise.id} className="bg-white/5 rounded-lg p-3 text-white flex gap-3 items-center cursor-pointer hover:bg-white/10 transition-colors group" onClick={() => handleEditClick(exercise)}>
+          {exerciciosDoDia.map(exercise => (
+            <div
+              key={exercise.id}
+              className={`bg-white/5 rounded-lg p-3 text-white flex gap-3 items-center cursor-pointer hover:bg-white/10 transition-colors group ${editingId === exercise.id ? 'ring-2 ring-blue-500' : ''}`}
+              onClick={() => handleEditClick(exercise)}
+            >
               {exercise.image && (
                 <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
                   <img 
@@ -459,7 +491,7 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onEditExercise, onDeleteExe
                 onClick={e => { e.stopPropagation(); handleDelete(exercise.id); }}
                 title="Deletar exercício"
               >
-                ×
+                <Trash className="w-5 h-5" />
               </button>
             </div>
           ))}
@@ -469,13 +501,157 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onEditExercise, onDeleteExe
   );
 };
 
-// Componente Principal do App
-const KanbanWorkoutApp = () => {
+const AppLayout = ({ children }) => (
+  <div style={{ backgroundColor: theme.colors.background.primary }} className="min-h-screen text-white">
+    {children}
+  </div>
+);
+
+const KanbanWorkoutApp = ({
+  exercises,
+  setExercises,
+  workoutPlan,
+  setWorkoutPlan,
+  selectedDay,
+  setSelectedDay,
+  handleAddExercise,
+  handleEditExercise,
+  handleDeleteExercise
+}) => {
+  const navigate = useNavigate();
+  const [restTimer, setRestTimer] = useState(null);
+
+  const todaysWorkout = workoutPlan[selectedDay] || [];
+
+  const handleSetComplete = (exerciseId, setIndex) => {
+    setWorkoutPlan(prev => ({
+      ...prev,
+      [selectedDay]: prev[selectedDay].map(item => 
+        item.exerciseId === exerciseId 
+          ? { ...item, completedSets: Math.max(setIndex + 1, item.completedSets) }
+          : item
+      )
+    }));
+    setRestTimer({
+      duration: 60,
+      onComplete: () => setRestTimer(null),
+      onAddTime: () => setRestTimer(prev => ({ ...prev, duration: prev.duration + 15 })),
+      onSkip: () => setRestTimer(null)
+    });
+  };
+
+  const handleStartExercise = (exercise) => {
+    const existingWorkout = todaysWorkout.find(w => w.exerciseId === exercise.id);
+    if (!existingWorkout) {
+      setWorkoutPlan(prev => ({
+        ...prev,
+        [selectedDay]: [...(prev[selectedDay] || []), { exerciseId: exercise.id, sets: 3, completedSets: 0 }]
+      }));
+    }
+  };
+
+  const getExerciseById = (id) => exercises.find(ex => ex.id === id);
+
+  return (
+    <AppLayout>
+      {/* Cabeçalho */}
+      <div className="px-6 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Treinos</h1>
+          <IconButton onClick={() => navigate('/biblioteca')}>
+            <Plus className="w-5 h-5 text-white" />
+          </IconButton>
+        </div>
+        {/* Seletor de Dia */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {Object.keys(workoutPlan).map(day => (
+            <button
+              key={day}
+              onClick={() => setSelectedDay(day)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
+                selectedDay === day
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-white/10 text-gray-400 hover:text-white'
+              }`}
+            >
+              {day}
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* Lista de Treinos */}
+      <div className="px-6">
+        <div className="space-y-4">
+          {todaysWorkout.map((workoutItem, index) => {
+            const exercise = getExerciseById(workoutItem.exerciseId);
+            if (!exercise) return null;
+            return (
+              <WorkoutCardView
+                key={`${exercise.id}-${index}`}
+                exercise={exercise}
+                sets={workoutItem.sets}
+                completedSets={workoutItem.completedSets}
+                onSetComplete={handleSetComplete}
+                onStartExercise={handleStartExercise}
+              />
+            );
+          })}
+          {todaysWorkout.length === 0 && (
+            <div className="text-center py-12">
+              <Clock className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+              <p className="text-gray-400 text-lg">Nenhum exercício planejado para {selectedDay}</p>
+              <p className="text-gray-500 text-sm mt-2">Toque no botão + para adicionar exercícios</p>
+            </div>
+          )}
+        </div>
+      </div>
+      {/* Modal do Cronômetro de Descanso */}
+      {restTimer && (
+        <RestTimer
+          duration={restTimer.duration}
+          onComplete={restTimer.onComplete}
+          onAddTime={restTimer.onAddTime}
+          onSkip={restTimer.onSkip}
+        />
+      )}
+    </AppLayout>
+  );
+};
+
+const BibliotecaScreen = (props) => {
+  const navigate = useNavigate();
+  // Reutiliza os mesmos handlers do KanbanWorkoutApp via props
+  return (
+    <AppLayout>
+      <div className="px-6 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Biblioteca de Exercícios</h1>
+          <IconButton onClick={() => navigate('/') }>
+            <Plus className="w-5 h-5 transform rotate-45" />
+          </IconButton>
+        </div>
+        <ExerciseLibrary
+          exercises={props.exercises}
+          onAddExercise={props.onAddExercise}
+          onEditExercise={props.onEditExercise}
+          onDeleteExercise={props.onDeleteExercise}
+          selectedDay={props.selectedDay}
+          setSelectedDay={props.setSelectedDay}
+          workoutPlan={props.workoutPlan}
+          setWorkoutPlan={props.setWorkoutPlan}
+          onClose={() => navigate('/')}
+        />
+      </div>
+    </AppLayout>
+  );
+};
+
+export default function App() {
+  // Estados e handlers principais centralizados aqui
   const getCurrentDay = () => {
     const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     return days[new Date().getDay()];
   };
-
   const [selectedDay, setSelectedDay] = useState(getCurrentDay());
   const [exercises, setExercises] = useState(exerciciosExemplo);
   const [workoutPlan, setWorkoutPlan] = useState({
@@ -527,53 +703,15 @@ const KanbanWorkoutApp = () => {
       { exerciseId: 34, sets: 4, completedSets: 0 }
     ]
   });
-  
-  const [showLibrary, setShowLibrary] = useState(false);
-  const [restTimer, setRestTimer] = useState(null);
-
-  const todaysWorkout = workoutPlan[selectedDay] || [];
-
-  const handleSetComplete = (exerciseId, setIndex) => {
-    setWorkoutPlan(prev => ({
-      ...prev,
-      [selectedDay]: prev[selectedDay].map(item => 
-        item.exerciseId === exerciseId 
-          ? { ...item, completedSets: Math.max(setIndex + 1, item.completedSets) }
-          : item
-      )
-    }));
-
-    // Iniciar cronômetro de descanso após completar uma série
-    setRestTimer({
-      duration: 60, // 1 minuto
-      onComplete: () => setRestTimer(null),
-      onAddTime: () => setRestTimer(prev => ({ ...prev, duration: prev.duration + 15 })),
-      onSkip: () => setRestTimer(null)
-    });
-  };
-
-  const handleStartExercise = (exercise) => {
-    const existingWorkout = todaysWorkout.find(w => w.exerciseId === exercise.id);
-    
-    if (!existingWorkout) {
-      setWorkoutPlan(prev => ({
-        ...prev,
-        [selectedDay]: [...(prev[selectedDay] || []), { exerciseId: exercise.id, sets: 3, completedSets: 0 }]
-      }));
-    }
-  };
 
   const handleAddExercise = (newExercise) => {
     setExercises(prev => [...prev, newExercise]);
   };
-
   const handleEditExercise = (edited) => {
     setExercises(prev => prev.map(ex => ex.id === edited.id ? edited : ex));
   };
-
   const handleDeleteExercise = (id) => {
     setExercises(prev => prev.filter(ex => ex.id !== id));
-    // Remover dos treinos do plano também
     setWorkoutPlan(prev => {
       const novo = {};
       for (const dia in prev) {
@@ -583,88 +721,33 @@ const KanbanWorkoutApp = () => {
     });
   };
 
-  const getExerciseById = (id) => exercises.find(ex => ex.id === id);
-
   return (
-    <div style={{ backgroundColor: theme.colors.background.primary }} className="min-h-screen text-white">
-      {/* Cabeçalho */}
-      <div className="px-6 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Treinos</h1>
-          <IconButton onClick={() => setShowLibrary(true)}>
-            <Plus className="w-5 h-5 text-white" />
-          </IconButton>
-        </div>
-
-        {/* Seletor de Dia */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {Object.keys(workoutPlan).map(day => (
-            <button
-              key={day}
-              onClick={() => setSelectedDay(day)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
-                selectedDay === day
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white/10 text-gray-400 hover:text-white'
-              }`}
-            >
-              {day}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Lista de Treinos */}
-      <div className="px-6">
-        <div className="space-y-4">
-          {todaysWorkout.map((workoutItem, index) => {
-            const exercise = getExerciseById(workoutItem.exerciseId);
-            if (!exercise) return null;
-            
-            return (
-              <WorkoutCardView
-                key={`${exercise.id}-${index}`}
-                exercise={exercise}
-                sets={workoutItem.sets}
-                completedSets={workoutItem.completedSets}
-                onSetComplete={handleSetComplete}
-                onStartExercise={handleStartExercise}
-              />
-            );
-          })}
-          
-          {todaysWorkout.length === 0 && (
-            <div className="text-center py-12">
-              <Clock className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">Nenhum exercício planejado para {selectedDay}</p>
-              <p className="text-gray-500 text-sm mt-2">Toque no botão + para adicionar exercícios</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Modal da Biblioteca de Exercícios */}
-      {showLibrary && (
-        <ExerciseLibrary
+    <Routes>
+      <Route path="/" element={
+        <KanbanWorkoutApp
+          exercises={exercises}
+          setExercises={setExercises}
+          workoutPlan={workoutPlan}
+          setWorkoutPlan={setWorkoutPlan}
+          selectedDay={selectedDay}
+          setSelectedDay={setSelectedDay}
+          handleAddExercise={handleAddExercise}
+          handleEditExercise={handleEditExercise}
+          handleDeleteExercise={handleDeleteExercise}
+        />
+      } />
+      <Route path="/biblioteca" element={
+        <BibliotecaScreen
           exercises={exercises}
           onAddExercise={handleAddExercise}
           onEditExercise={handleEditExercise}
           onDeleteExercise={handleDeleteExercise}
-          onClose={() => setShowLibrary(false)}
+          selectedDay={selectedDay}
+          setSelectedDay={setSelectedDay}
+          workoutPlan={workoutPlan}
+          setWorkoutPlan={setWorkoutPlan}
         />
-      )}
-
-      {/* Modal do Cronômetro de Descanso */}
-      {restTimer && (
-        <RestTimer
-          duration={restTimer.duration}
-          onComplete={restTimer.onComplete}
-          onAddTime={restTimer.onAddTime}
-          onSkip={restTimer.onSkip}
-        />
-      )}
-    </div>
+      } />
+    </Routes>
   );
-};
-
-export default KanbanWorkoutApp;
+}
