@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Info, Check, Play, Pause, SkipForward, Clock, Trash } from 'lucide-react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
+import { useSwipeable } from 'react-swipeable';
+import { useKeenSlider } from 'keen-slider/react';
+import 'keen-slider/keen-slider.min.css';
 
 // Tokens do Sistema de Design
 const theme = {
@@ -25,9 +28,9 @@ const exerciciosExemplo = [
   // Domingo – Pernas (foco quadríceps)
   { id: 1, name: 'Agachamento livre', muscle: 'pernas', reps: '4 × 8-10', weight: '20 kg', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=300&h=200&fit=crop&crop=center' },
   { id: 2, name: 'Leg press', muscle: 'pernas', reps: '4 × 10-12', weight: '50 kg cada lado', image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=300&h=200&fit=crop&crop=center' },
-  { id: 3, name: 'Cadeira extensora', muscle: 'pernas', reps: '4 × 12', weight: '68 kg', image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=300&h=200&fit=crop&crop=center' },
+  { id: 3, name: 'Cadeira extensora', muscle: 'pernas', reps: '4 × 12', weight: '68 kg', image: '/Imagens/cadeira_flexora.png' },
   { id: 4, name: 'Afundo c/ halteres', muscle: 'pernas', reps: '3 × 10 por perna', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=300&h=200&fit=crop&crop=center' },
-  { id: 5, name: 'Panturrilha em pé', muscle: 'pernas', reps: '4 × 15', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=300&h=200&fit=crop&crop=center' },
+  { id: 5, name: 'Panturrilha em pé', muscle: 'pernas', reps: '4 × 15', weight: 'Peso corporal', image: '/Imagens/Panturrilha_sentada.png' },
   
   // Segunda – Peito + tríceps
   { id: 6, name: 'Supino reto', muscle: 'peito', reps: '4 × 8', weight: '≥ 22 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
@@ -43,15 +46,15 @@ const exerciciosExemplo = [
   { id: 14, name: 'Pulley frente', muscle: 'costas', reps: '4 × 12', weight: '42 kg', image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=300&h=200&fit=crop&crop=center' },
   { id: 15, name: 'Rosca direta', muscle: 'bracos', reps: '4 × 10', weight: '14 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
   { id: 16, name: 'Rosca alternada', muscle: 'bracos', reps: '3 × 12', weight: '12 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 17, name: 'Abdominal paralela meia-bola', muscle: 'abdomen', reps: '4 × 15', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
+  { id: 17, name: 'Abdominal paralela meia-bola', muscle: 'abdomen', reps: '4 × 15', weight: 'Peso corporal', image: '/Imagens/Abdominal_paralela_meia_bola.png' },
   
   // Quinta – Pernas (foco posterior)
-  { id: 18, name: 'Stiff', muscle: 'pernas', reps: '4 × 10', weight: '≥ 40 kg (barra 20 kg + 30 kg anilhas)', image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=300&h=200&fit=crop&crop=center' },
-  { id: 19, name: 'Mesa flexora', muscle: 'pernas', reps: '4 × 12', weight: '≥ 35 kg', image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=300&h=200&fit=crop&crop=center' },
-  { id: 20, name: 'Levantamento terra', muscle: 'pernas', reps: '3 × 8', weight: '≥ 35 kg', image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=300&h=200&fit=crop&crop=center' },
-  { id: 21, name: 'Panturrilha sentada', muscle: 'pernas', reps: '4 × 15', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=300&h=200&fit=crop&crop=center' },
-  { id: 22, name: 'Passada', muscle: 'pernas', reps: '3 × 10 por perna', weight: '8 kg', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=300&h=200&fit=crop&crop=center' },
-  { id: 23, name: 'Abdominal paralela meia-bola', muscle: 'abdomen', reps: '4 × 15', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
+  { id: 18, name: 'Stiff', muscle: 'pernas', reps: '4 × 10', weight: '≥ 40 kg (barra 20 kg + 30 kg anilhas)', image: '/Imagens/Stiff.png' },
+  { id: 19, name: 'Mesa flexora', muscle: 'pernas', reps: '4 × 12', weight: '≥ 35 kg', image: '/Imagens/mesa_flexora.png' },
+  { id: 20, name: 'Levantamento terra', muscle: 'pernas', reps: '3 × 8', weight: '≥ 35 kg', image: '/Imagens/Levantamento terra.png' },
+  { id: 21, name: 'Panturrilha sentada', muscle: 'pernas', reps: '4 × 15', weight: 'Peso corporal', image: '/Imagens/Panturrilha_sentada.png' },
+  { id: 22, name: 'Passada', muscle: 'pernas', reps: '3 × 10 por perna', weight: '8 kg', image: '/Imagens/passada.png' },
+  { id: 23, name: 'Abdominal paralela meia-bola', muscle: 'abdomen', reps: '4 × 15', weight: 'Peso corporal', image: '/Imagens/Abdominal_paralela_meia_bola.png' },
   
   // Sexta – Peito + ombro
   { id: 24, name: 'Supino declinado', muscle: 'peito', reps: '4 × 10 (24)', weight: '35 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
@@ -66,7 +69,7 @@ const exerciciosExemplo = [
   { id: 31, name: 'Rosca unilateral atrás do corpo (polia)', muscle: 'bracos', reps: '3 × 12', weight: '12 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
   { id: 32, name: 'Tríceps francês', muscle: 'bracos', reps: '3 × 12', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
   { id: 33, name: 'Tríceps banco', muscle: 'bracos', reps: '3 × 10', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 34, name: 'Abdominal paralela meia-bola', muscle: 'abdomen', reps: '4 × 15', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' }
+  { id: 34, name: 'Abdominal paralela meia-bola', muscle: 'abdomen', reps: '4 × 15', weight: 'Peso corporal', image: '/Imagens/Abdominal_paralela_meia_bola.png' }
 ];
 
 const gruposMusculares = {
@@ -171,7 +174,7 @@ const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplet
                 {gruposMusculares[exercise.muscle] || exercise.muscle}
               </span>
             </div>
-            <p className="text-gray-400 text-sm">{sets} × {exercise.reps} reps - {exercise.weight}</p>
+            <p className="text-gray-400 text-sm">{exercise.reps} reps - {exercise.weight}</p>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-gray-400 text-sm">{completedSets}/{sets}</span>
@@ -302,6 +305,8 @@ const AppLayout = ({ children }) => (
   </div>
 );
 
+const dias = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
 const KanbanWorkoutApp = ({
   exercises,
   setExercises,
@@ -316,6 +321,28 @@ const KanbanWorkoutApp = ({
   const navigate = useNavigate();
   const [restTimer, setRestTimer] = useState(null);
   const [modalImage, setModalImage] = useState(null);
+
+  // Sincronizar slide com selectedDay
+  const initialSlide = dias.indexOf(selectedDay);
+  const [sliderRef, instanceRef] = useKeenSlider({
+    initial: initialSlide,
+    slideChanged(s) {
+      setSelectedDay(dias[s.track.details.rel]);
+    },
+    rubberband: true,
+    mode: 'snap',
+    slides: { perView: 1, spacing: 16 },
+    animation: { duration: 600, easing: t => t }
+  });
+
+  useEffect(() => {
+    if (instanceRef.current) {
+      const idx = dias.indexOf(selectedDay);
+      if (instanceRef.current.track.details.rel !== idx) {
+        instanceRef.current.moveToIdx(idx);
+      }
+    }
+  }, [selectedDay]);
 
   const todaysWorkout = workoutPlan[selectedDay] || [];
 
@@ -385,7 +412,7 @@ const KanbanWorkoutApp = ({
           </div>
           {/* Seletor de Dia */}
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {Object.keys(workoutPlan).map(day => (
+            {dias.map(day => (
               <button
                 key={day}
                 onClick={() => setSelectedDay(day)}
@@ -401,33 +428,40 @@ const KanbanWorkoutApp = ({
           </div>
         </div>
       </div>
-      {/* Lista de Treinos rolável */}
-      <div className="flex-1 overflow-y-auto px-6 pt-2 pb-8">
-        <div className="space-y-4">
-          {todaysWorkout.map((workoutItem, index) => {
-            const exercise = getExerciseById(workoutItem.exerciseId);
-            if (!exercise) return null;
-            return (
-              <WorkoutCardView
-                key={`${exercise.id}-${index}`}
-                exercise={exercise}
-                sets={workoutItem.sets}
-                completedSets={workoutItem.completedSets}
-                restTime={workoutItem.restTime}
-                onSetComplete={handleSetComplete}
-                onStartExercise={handleStartExercise}
-                onImageClick={() => setModalImage(exercise.image)}
-              />
-            );
-          })}
-          {todaysWorkout.length === 0 && (
-            <div className="text-center py-12">
-              <Clock className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">Nenhum exercício planejado para {selectedDay}</p>
-              <p className="text-gray-500 text-sm mt-2">Toque no botão + para adicionar exercícios</p>
+      {/* Carrossel de Treinos */}
+      <div ref={sliderRef} className="keen-slider flex-1 overflow-y-auto px-0 pt-2 pb-8">
+        {dias.map((day, idx) => {
+          const todaysWorkout = workoutPlan[day] || [];
+          return (
+            <div key={day} className="keen-slider__slide px-6">
+              <div className="space-y-4">
+                {todaysWorkout.map((workoutItem, index) => {
+                  const exercise = exercises.find(ex => ex.id === workoutItem.exerciseId);
+                  if (!exercise) return null;
+                  return (
+                    <WorkoutCardView
+                      key={`${exercise.id}-${index}`}
+                      exercise={exercise}
+                      sets={workoutItem.sets}
+                      completedSets={workoutItem.completedSets}
+                      restTime={workoutItem.restTime}
+                      onSetComplete={handleSetComplete}
+                      onStartExercise={handleStartExercise}
+                      onImageClick={() => setModalImage(exercise.image)}
+                    />
+                  );
+                })}
+                {todaysWorkout.length === 0 && (
+                  <div className="text-center py-12">
+                    <Clock className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-400 text-lg">Nenhum exercício planejado para {day}</p>
+                    <p className="text-gray-500 text-sm mt-2">Toque no botão + para adicionar exercícios</p>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </div>
+          );
+        })}
       </div>
       {/* Modal de Imagem */}
       {modalImage && (
@@ -650,7 +684,7 @@ const BibliotecaScreen = (props) => {
           </div>
           {/* Seletor de Dia */}
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {Object.keys(props.workoutPlan).map(day => (
+            {dias.map(day => (
               <button
                 key={day}
                 onClick={() => props.setSelectedDay(day)}
