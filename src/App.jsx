@@ -249,47 +249,60 @@ const RestTimer = ({ duration, onComplete, onAddTime, onSkip }) => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Parâmetros do círculo refinados
+  const size = 140;
+  const strokeWidthBg = 7;
+  const strokeWidth = 9;
+  const center = size / 2;
+  const radius = center - strokeWidth / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-8 w-full max-w-xs mx-auto border border-white/10 text-center shadow-2xl relative">
-        <h2 className="text-white text-lg font-semibold mb-4 tracking-widest">CRONÔMETRO DE DESCANSO</h2>
-        <div className="flex flex-col items-center justify-center mb-6">
-          <svg width="120" height="120" className="block">
+    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-2">
+      <div className="bg-[#181C23] rounded-2xl p-5 w-full max-w-xs mx-auto border border-white/10 text-center shadow-2xl relative flex flex-col items-center">
+        <span className="text-[11px] text-white/50 tracking-widest mb-1">CRONÔMETRO DE DESCANSO</span>
+        <div className="relative flex items-center justify-center mb-4" style={{ width: size, height: size }}>
+          <svg width={size} height={size}>
             <circle
-              cx="60"
-              cy="60"
-              r="54"
-              stroke="#222"
-              strokeWidth="12"
+              cx={center}
+              cy={center}
+              r={radius}
+              stroke="#23272F"
+              strokeWidth={strokeWidthBg}
               fill="none"
             />
             <circle
-              cx="60"
-              cy="60"
-              r="54"
+              cx={center}
+              cy={center}
+              r={radius}
               stroke="#127AFF"
-              strokeWidth="12"
+              strokeWidth={strokeWidth}
               fill="none"
-              strokeDasharray={2 * Math.PI * 54}
-              strokeDashoffset={2 * Math.PI * 54 * (1 - progress / 100)}
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
-              style={{ transition: 'stroke-dashoffset 0.5s linear' }}
+              style={{
+                transition: 'stroke-dashoffset 0.5s linear',
+                transform: 'rotate(-90deg)',
+                transformOrigin: '50% 50%'
+              }}
             />
           </svg>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl font-mono text-white select-none" style={{ pointerEvents: 'none' }}>
+          <span className="absolute inset-0 flex items-center justify-center text-[2.8rem] font-mono text-white select-none font-light" style={{ letterSpacing: '-3px', fontVariantNumeric: 'tabular-nums' }}>
             {formatTime(timeLeft)}
-          </div>
+          </span>
         </div>
-        <div className="flex gap-3 justify-center mt-4">
+        <div className="flex gap-2 justify-center w-full mt-1">
           <button
-            onClick={onAddTime}
-            className="flex-1 bg-white/10 hover:bg-blue-500/20 text-blue-400 py-3 rounded-lg font-medium transition-colors"
+            onClick={() => setTimeLeft((prev) => prev + 15)}
+            className="flex-1 bg-[#23272F] hover:bg-blue-500/20 text-blue-400 py-2 rounded-full font-medium transition-colors text-sm"
           >
             +15 seg
           </button>
           <button
             onClick={onSkip}
-            className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors"
+            className="flex-1 bg-blue-500 text-white py-2 rounded-full font-medium hover:bg-blue-600 transition-colors text-sm"
           >
             Pular
           </button>
@@ -346,14 +359,18 @@ const KanbanWorkoutApp = ({
 
   const todaysWorkout = workoutPlan[selectedDay] || [];
 
-  const handleSetComplete = (exerciseId, setIndex, restTime) => {
+  const handleSetComplete = (exerciseId, _setIndex, restTime) => {
     setWorkoutPlan(prev => ({
       ...prev,
-      [selectedDay]: prev[selectedDay].map(item => 
-        item.exerciseId === exerciseId 
-          ? { ...item, completedSets: Math.max(setIndex + 1, item.completedSets), restTime }
-          : item
-      )
+      [selectedDay]: prev[selectedDay].map(item => {
+        if (item.exerciseId === exerciseId) {
+          // Se já completou todas as séries, não faz nada
+          if (item.completedSets >= item.sets) return item;
+          // Preenche a próxima série não feita
+          return { ...item, completedSets: item.completedSets + 1, restTime };
+        }
+        return item;
+      })
     }));
     setRestTimer({
       duration: restTime,
