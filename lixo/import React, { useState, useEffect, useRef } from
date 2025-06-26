@@ -21,51 +21,12 @@ const theme = {
 
 // Modelos de Dados
 const exerciciosExemplo = [
-  // Domingo – Pernas (foco quadríceps)
-  { id: 1, name: 'Agachamento livre', muscle: 'pernas', reps: '4 × 8-10', weight: '20 kg', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=300&h=200&fit=crop&crop=center' },
-  { id: 2, name: 'Leg press', muscle: 'pernas', reps: '4 × 10-12', weight: '50 kg cada lado', image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=300&h=200&fit=crop&crop=center' },
-  { id: 3, name: 'Cadeira extensora', muscle: 'pernas', reps: '4 × 12', weight: '68 kg', image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=300&h=200&fit=crop&crop=center' },
-  { id: 4, name: 'Afundo c/ halteres', muscle: 'pernas', reps: '3 × 10 por perna', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=300&h=200&fit=crop&crop=center' },
-  { id: 5, name: 'Panturrilha em pé', muscle: 'pernas', reps: '4 × 15', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=300&h=200&fit=crop&crop=center' },
-  
-  // Segunda – Peito + tríceps
-  { id: 6, name: 'Supino reto', muscle: 'peito', reps: '4 × 8', weight: '≥ 22 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 7, name: 'Supino inclinado', muscle: 'peito', reps: '4 × 10', weight: '17 kg (livre) ou 27 kg (máquina)', image: 'https://images.unsplash.com/photo-1594737625785-a6cbdabd333c?w=300&h=200&fit=crop&crop=center' },
-  { id: 8, name: 'Crossover', muscle: 'peito', reps: '3 × 12', weight: 'Substitui crucifixo 65', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 9, name: 'Tríceps pulley', muscle: 'bracos', reps: '4 × 12', weight: '25 kg ou nível 10', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 10, name: 'Mergulho', muscle: 'bracos', reps: '3 × 10', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 11, name: 'Abdominal meia-bola', muscle: 'abdomen', reps: '4 × 15', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  
-  // Terça – Costas + bíceps
-  { id: 12, name: 'Barra fixa', muscle: 'costas', reps: '4 × máx.', weight: '20 kg lastro', image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=300&h=200&fit=crop&crop=center' },
-  { id: 13, name: 'Remada curvada', muscle: 'costas', reps: '4 × 10', weight: '35 kg', image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=300&h=200&fit=crop&crop=center' },
-  { id: 14, name: 'Pulley frente', muscle: 'costas', reps: '4 × 12', weight: '42 kg', image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=300&h=200&fit=crop&crop=center' },
-  { id: 15, name: 'Rosca direta', muscle: 'bracos', reps: '4 × 10', weight: '14 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 16, name: 'Rosca alternada', muscle: 'bracos', reps: '3 × 12', weight: '12 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 17, name: 'Abdominal paralela meia-bola', muscle: 'abdomen', reps: '4 × 15', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  
-  // Quinta – Pernas (foco posterior)
-  { id: 18, name: 'Stiff', muscle: 'pernas', reps: '4 × 10', weight: '≥ 40 kg (barra 20 kg + 30 kg anilhas)', image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=300&h=200&fit=crop&crop=center' },
-  { id: 19, name: 'Mesa flexora', muscle: 'pernas', reps: '4 × 12', weight: '≥ 35 kg', image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=300&h=200&fit=crop&crop=center' },
-  { id: 20, name: 'Levantamento terra', muscle: 'pernas', reps: '3 × 8', weight: '≥ 35 kg', image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=300&h=200&fit=crop&crop=center' },
-  { id: 21, name: 'Panturrilha sentada', muscle: 'pernas', reps: '4 × 15', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=300&h=200&fit=crop&crop=center' },
-  { id: 22, name: 'Passada', muscle: 'pernas', reps: '3 × 10 por perna', weight: '8 kg', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=300&h=200&fit=crop&crop=center' },
-  { id: 23, name: 'Abdominal paralela meia-bola', muscle: 'abdomen', reps: '4 × 15', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  
-  // Sexta – Peito + ombro
-  { id: 24, name: 'Supino declinado', muscle: 'peito', reps: '4 × 10 (24)', weight: '35 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 25, name: 'Crucifixo reto', muscle: 'peito', reps: '3 × 12', weight: '57 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 26, name: 'Elevação lateral', muscle: 'ombros', reps: '4 × 12', weight: '8 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 27, name: 'Desenvolvimento c/ halteres', muscle: 'ombros', reps: '3 × 10', weight: '18 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 28, name: 'Encolhimento', muscle: 'ombros', reps: '3 × 15', weight: '22 kg (halter)', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  
-  // Sábado – Braços (bíceps + tríceps)
-  { id: 29, name: 'Rosca direta barra reta (polia)', muscle: 'bracos', reps: '4 × 10', weight: '28 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 30, name: 'Rosca martelo (polia)', muscle: 'bracos', reps: '3 × 12', weight: '21 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 31, name: 'Rosca unilateral atrás do corpo (polia)', muscle: 'bracos', reps: '3 × 12', weight: '12 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 32, name: 'Tríceps francês', muscle: 'bracos', reps: '3 × 12', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 33, name: 'Tríceps banco', muscle: 'bracos', reps: '3 × 10', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 34, name: 'Abdominal paralela meia-bola', muscle: 'abdomen', reps: '4 × 15', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' }
+  { id: 1, name: 'Agachamento com Barra', muscle: 'pernas', reps: '8-10', weight: '80 kg', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=300&h=200&fit=crop&crop=center' },
+  { id: 2, name: 'Supino Reto', muscle: 'peito', reps: '8-12', weight: '60 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
+  { id: 3, name: 'Levantamento Terra Romeno', muscle: 'pernas', reps: '10-12', weight: '70 kg', image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=300&h=200&fit=crop&crop=center' },
+  { id: 4, name: 'Flexão de Pernas Sentado', muscle: 'pernas', reps: '12-15', weight: '35 kg', image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=300&h=200&fit=crop&crop=center' },
+  { id: 5, name: 'Supino Inclinado com Halteres', muscle: 'peito', reps: '10-12', weight: '30 kg', image: 'https://images.unsplash.com/photo-1594737625785-a6cbdabd333c?w=300&h=200&fit=crop&crop=center' },
+  { id: 6, name: 'Puxada na Polia Alta', muscle: 'costas', reps: '10-12', weight: '55 kg', image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=300&h=200&fit=crop&crop=center' }
 ];
 
 const gruposMusculares = {
@@ -73,10 +34,7 @@ const gruposMusculares = {
   'peito': 'Peito',
   'costas': 'Costas',
   'ombros': 'Ombros',
-  'bracos': 'Braços',
-  'abdomen': 'Abdômen',
-  'cardio': 'Cardio',
-  'funcional': 'Funcional'
+  'bracos': 'Braços'
 };
 
 // Componentes
@@ -156,7 +114,7 @@ const WorkoutCardView = ({ exercise, sets, completedSets, onSetComplete, onStart
               alt={exercise.name}
               className="w-full h-full object-cover"
               onError={(e) => {
-                if (e.target) e.target.style.display = 'none';
+                e.target.style.display = 'none';
               }}
             />
           </div>
@@ -240,35 +198,39 @@ const RestTimer = ({ duration, onComplete, onAddTime, onSkip }) => {
     return () => clearInterval(intervalRef.current);
   }, [isRunning, timeLeft, onComplete]);
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  const progress = ((duration - timeLeft) / duration) * 100;
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
 
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-2xl p-8 text-center border border-white/10">
-        <h3 className="text-white text-xl font-semibold mb-4">Tempo de Descanso</h3>
+      <div className="text-center">
+        <h2 className="text-white/60 text-sm uppercase tracking-wide mb-4">Cronômetro de Descanso</h2>
         
-        <div className="flex justify-center mb-6">
-          <ProgressRing progress={((duration - timeLeft) / duration) * 100} />
+        <div className="relative mb-6">
+          <ProgressRing progress={progress} size={200} strokeWidth={12} />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-white text-4xl font-bold">
+              {minutes}:{seconds.toString().padStart(2, '0')}
+            </span>
+          </div>
         </div>
-        
-        <div className="text-4xl font-bold text-white mb-6">
-          {formatTime(timeLeft)}
-        </div>
-        
-        <div className="flex gap-3 justify-center">
-          <IconButton onClick={onAddTime}>
-            <Plus className="w-5 h-5" />
-          </IconButton>
-          <IconButton onClick={() => setIsRunning(!isRunning)}>
-            {isRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-          </IconButton>
-          <IconButton onClick={onSkip}>
-            <SkipForward className="w-5 h-5" />
-          </IconButton>
+
+        <div className="flex gap-4 justify-center">
+          <PillButton onClick={onAddTime} variant="secondary">
+            +15 seg
+          </PillButton>
+          
+          <PillButton 
+            onClick={() => setIsRunning(!isRunning)} 
+            variant="secondary"
+          >
+            {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          </PillButton>
+          
+          <PillButton onClick={onSkip} variant="primary">
+            Pular
+          </PillButton>
         </div>
       </div>
     </div>
@@ -302,8 +264,8 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md mx-auto border border-white/10 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md mx-4 border border-white/10 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-white text-xl font-semibold">Biblioteca de Exercícios</h2>
           <IconButton onClick={onClose}>
@@ -317,22 +279,19 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
             placeholder="Nome do exercício"
             value={newExercise.name}
             onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
-            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400"
           />
           
           <select
             value={newExercise.muscle}
             onChange={(e) => setNewExercise(prev => ({ ...prev, muscle: e.target.value }))}
-            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white"
           >
             <option value="pernas">Pernas</option>
             <option value="peito">Peito</option>
             <option value="costas">Costas</option>
             <option value="ombros">Ombros</option>
             <option value="bracos">Braços</option>
-            <option value="abdomen">Abdômen</option>
-            <option value="cardio">Cardio</option>
-            <option value="funcional">Funcional</option>
           </select>
 
           <div className="flex gap-2">
@@ -341,14 +300,14 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
               placeholder="Repetições"
               value={newExercise.reps}
               onChange={(e) => setNewExercise(prev => ({ ...prev, reps: e.target.value }))}
-              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400"
             />
             <input
               type="text"
               placeholder="Peso"
               value={newExercise.weight}
               onChange={(e) => setNewExercise(prev => ({ ...prev, weight: e.target.value }))}
-              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400"
             />
           </div>
 
@@ -383,7 +342,7 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
               placeholder="URL da imagem (opcional)"
               value={newExercise.image}
               onChange={(e) => setNewExercise(prev => ({ ...prev, image: e.target.value }))}
-              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400"
             />
           ) : (
             <div className="space-y-2">
@@ -396,7 +355,7 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white hover:bg-white/20 transition-colors focus:outline-none focus:border-blue-500"
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white hover:bg-white/20 transition-colors"
               >
                 Escolher Imagem
               </button>
@@ -411,7 +370,7 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
                 alt="Preview" 
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  if (e.target) e.target.style.display = 'none';
+                  e.target.style.display = 'none';
                 }}
               />
             </div>
@@ -432,14 +391,14 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
                     alt={exercise.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      if (e.target) e.target.style.display = 'none';
+                      e.target.style.display = 'none';
                     }}
                   />
                 </div>
               )}
-              <div className="flex-1 min-w-0">
-                <div className="font-medium truncate">{exercise.name}</div>
-                <div className="text-sm text-gray-400 truncate">{exercise.reps} reps - {exercise.weight}</div>
+              <div className="flex-1">
+                <div className="font-medium">{exercise.name}</div>
+                <div className="text-sm text-gray-400">{exercise.reps} reps - {exercise.weight}</div>
               </div>
             </div>
           ))}
@@ -451,60 +410,20 @@ const ExerciseLibrary = ({ exercises, onAddExercise, onClose }) => {
 
 // Componente Principal do App
 const KanbanWorkoutApp = () => {
-  const getCurrentDay = () => {
-    const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    return days[new Date().getDay()];
-  };
-
-  const [selectedDay, setSelectedDay] = useState(getCurrentDay());
+  const [selectedDay, setSelectedDay] = useState('Hoje');
   const [exercises, setExercises] = useState(exerciciosExemplo);
   const [workoutPlan, setWorkoutPlan] = useState({
-    'Domingo': [
-      { exerciseId: 1, sets: 4, completedSets: 0 },
-      { exerciseId: 2, sets: 4, completedSets: 0 },
+    Domingo: [
+      { exerciseId: 1, sets: 4, completedSets: 4 },
       { exerciseId: 3, sets: 4, completedSets: 0 },
-      { exerciseId: 4, sets: 3, completedSets: 0 },
-      { exerciseId: 5, sets: 4, completedSets: 0 }
+      { exerciseId: 4, sets: 3, completedSets: 0 }
     ],
-    'Segunda': [
-      { exerciseId: 6, sets: 4, completedSets: 0 },
-      { exerciseId: 7, sets: 4, completedSets: 0 },
-      { exerciseId: 8, sets: 3, completedSets: 0 },
-      { exerciseId: 9, sets: 4, completedSets: 0 },
-      { exerciseId: 10, sets: 3, completedSets: 0 },
-      { exerciseId: 11, sets: 4, completedSets: 0 }
+    Hoje: [
+      { exerciseId: 2, sets: 4, completedSets: 2 },
+      { exerciseId: 5, sets: 3, completedSets: 0 }
     ],
-    'Terça': [
-      { exerciseId: 12, sets: 4, completedSets: 0 },
-      { exerciseId: 13, sets: 4, completedSets: 0 },
-      { exerciseId: 14, sets: 4, completedSets: 0 },
-      { exerciseId: 15, sets: 4, completedSets: 0 },
-      { exerciseId: 16, sets: 3, completedSets: 0 },
-      { exerciseId: 17, sets: 4, completedSets: 0 }
-    ],
-    'Quarta': [],
-    'Quinta': [
-      { exerciseId: 18, sets: 4, completedSets: 0 },
-      { exerciseId: 19, sets: 4, completedSets: 0 },
-      { exerciseId: 20, sets: 3, completedSets: 0 },
-      { exerciseId: 21, sets: 4, completedSets: 0 },
-      { exerciseId: 22, sets: 3, completedSets: 0 },
-      { exerciseId: 23, sets: 4, completedSets: 0 }
-    ],
-    'Sexta': [
-      { exerciseId: 24, sets: 4, completedSets: 0 },
-      { exerciseId: 25, sets: 3, completedSets: 0 },
-      { exerciseId: 26, sets: 4, completedSets: 0 },
-      { exerciseId: 27, sets: 3, completedSets: 0 },
-      { exerciseId: 28, sets: 3, completedSets: 0 }
-    ],
-    'Sábado': [
-      { exerciseId: 29, sets: 4, completedSets: 0 },
-      { exerciseId: 30, sets: 3, completedSets: 0 },
-      { exerciseId: 31, sets: 3, completedSets: 0 },
-      { exerciseId: 32, sets: 3, completedSets: 0 },
-      { exerciseId: 33, sets: 3, completedSets: 0 },
-      { exerciseId: 34, sets: 4, completedSets: 0 }
+    Quarta: [
+      { exerciseId: 6, sets: 4, completedSets: 1 }
     ]
   });
   
@@ -561,12 +480,12 @@ const KanbanWorkoutApp = () => {
         </div>
 
         {/* Seletor de Dia */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {Object.keys(workoutPlan).map(day => (
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {['Domingo', 'Hoje', 'Quarta'].map(day => (
             <button
               key={day}
               onClick={() => setSelectedDay(day)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 selectedDay === day
                   ? 'bg-blue-500 text-white'
                   : 'bg-white/10 text-gray-400 hover:text-white'
