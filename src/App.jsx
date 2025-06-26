@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Info, Check, Play, Pause, SkipForward, Clock, Trash } from 'lucide-react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import { useSwipeable } from 'react-swipeable';
 import { useKeenSlider } from 'keen-slider/react';
 import 'keen-slider/keen-slider.min.css';
 
