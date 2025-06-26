@@ -142,7 +142,7 @@ const ProgressRing = ({ progress, size = 120, strokeWidth = 8 }) => {
   );
 };
 
-const WorkoutCardView = ({ exercise, sets, completedSets, onSetComplete, onStartExercise }) => {
+const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplete, onStartExercise }) => {
   const progress = sets > 0 ? (completedSets / sets) * 100 : 0;
   const isCompleted = completedSets === sets && sets > 0;
 
@@ -166,7 +166,7 @@ const WorkoutCardView = ({ exercise, sets, completedSets, onSetComplete, onStart
         <div className="flex justify-between items-start flex-1">
           <div className="flex-1">
             <h3 className="text-white font-semibold text-lg">{exercise.name}</h3>
-            <p className="text-gray-400 text-sm">{exercise.reps} reps - {exercise.weight}</p>
+            <p className="text-gray-400 text-sm">{sets} × {exercise.reps} reps - {exercise.weight}</p>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-gray-400 text-sm">{completedSets}/{sets}</span>
@@ -194,7 +194,7 @@ const WorkoutCardView = ({ exercise, sets, completedSets, onSetComplete, onStart
             {[...Array(sets)].map((_, index) => (
               <button
                 key={index}
-                onClick={() => onSetComplete(exercise.id, index)}
+                onClick={() => onSetComplete(exercise.id, index, restTime)}
                 className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-medium transition-colors ${
                   index < completedSets
                     ? 'bg-blue-500 border-blue-500 text-white'
@@ -286,17 +286,17 @@ const KanbanWorkoutApp = ({
 
   const todaysWorkout = workoutPlan[selectedDay] || [];
 
-  const handleSetComplete = (exerciseId, setIndex) => {
+  const handleSetComplete = (exerciseId, setIndex, restTime) => {
     setWorkoutPlan(prev => ({
       ...prev,
       [selectedDay]: prev[selectedDay].map(item => 
         item.exerciseId === exerciseId 
-          ? { ...item, completedSets: Math.max(setIndex + 1, item.completedSets) }
+          ? { ...item, completedSets: Math.max(setIndex + 1, item.completedSets), restTime }
           : item
       )
     }));
     setRestTimer({
-      duration: 60,
+      duration: restTime,
       onComplete: () => setRestTimer(null),
       onAddTime: () => setRestTimer(prev => ({ ...prev, duration: prev.duration + 15 })),
       onSkip: () => setRestTimer(null)
@@ -308,7 +308,7 @@ const KanbanWorkoutApp = ({
     if (!existingWorkout) {
       setWorkoutPlan(prev => ({
         ...prev,
-        [selectedDay]: [...(prev[selectedDay] || []), { exerciseId: exercise.id, sets: 3, completedSets: 0 }]
+        [selectedDay]: [...(prev[selectedDay] || []), { exerciseId: exercise.id, sets: 3, completedSets: 0, restTime: 60 }]
       }));
     }
   };
@@ -354,6 +354,7 @@ const KanbanWorkoutApp = ({
                 exercise={exercise}
                 sets={workoutItem.sets}
                 completedSets={workoutItem.completedSets}
+                restTime={workoutItem.restTime}
                 onSetComplete={handleSetComplete}
                 onStartExercise={handleStartExercise}
               />
@@ -383,7 +384,15 @@ const KanbanWorkoutApp = ({
 
 const BibliotecaScreen = (props) => {
   const navigate = useNavigate();
-  const [newExercise, setNewExercise] = useState({ name: '', muscle: 'pernas', reps: '8-10', weight: '0 kg', image: '' });
+  const [newExercise, setNewExercise] = useState({ 
+    name: '', 
+    muscle: 'pernas', 
+    reps: '', 
+    sets: '', 
+    weight: '', 
+    restTime: '60',
+    image: '' 
+  });
   const [imageInputType, setImageInputType] = useState('url');
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -415,13 +424,23 @@ const BibliotecaScreen = (props) => {
       // Atualiza o plano do dia
       props.setWorkoutPlan(prev => {
         const atual = prev[props.selectedDay] || [];
+        const sets = parseInt(newExercise.sets) || 3;
+        const restTime = parseInt(newExercise.restTime) || 60;
         if (!editingId) {
-          return { ...prev, [props.selectedDay]: [...atual, { exerciseId: newId, sets: 3, completedSets: 0 }] };
+          return { ...prev, [props.selectedDay]: [...atual, { exerciseId: newId, sets, completedSets: 0, restTime }] };
         } else {
-          return { ...prev, [props.selectedDay]: atual.map(item => item.exerciseId === editingId ? { ...item, exerciseId: editingId } : item) };
+          return { ...prev, [props.selectedDay]: atual.map(item => item.exerciseId === editingId ? { ...item, exerciseId: editingId, sets, restTime } : item) };
         }
       });
-      setNewExercise({ name: '', muscle: 'pernas', reps: '8-10', weight: '0 kg', image: '' });
+      setNewExercise({ 
+        name: '', 
+        muscle: 'pernas', 
+        reps: '', 
+        sets: '', 
+        weight: '', 
+        restTime: '60',
+        image: '' 
+      });
       setEditingId(null);
       setShowForm(false);
     }
@@ -431,8 +450,10 @@ const BibliotecaScreen = (props) => {
     setNewExercise({
       name: exercise.name,
       muscle: exercise.muscle,
-      reps: exercise.reps,
-      weight: exercise.weight,
+      reps: exercise.reps || '',
+      sets: exercise.sets || '',
+      weight: exercise.weight || '',
+      restTime: exercise.restTime || '60',
       image: exercise.image || ''
     });
     setEditingId(exercise.id);
@@ -448,7 +469,15 @@ const BibliotecaScreen = (props) => {
       return novo;
     });
     if (editingId === id) {
-      setNewExercise({ name: '', muscle: 'pernas', reps: '8-10', weight: '0 kg', image: '' });
+      setNewExercise({ 
+        name: '', 
+        muscle: 'pernas', 
+        reps: '', 
+        sets: '', 
+        weight: '', 
+        restTime: '60',
+        image: '' 
+      });
       setEditingId(null);
       setShowForm(false);
     }
@@ -456,7 +485,15 @@ const BibliotecaScreen = (props) => {
 
   const cancelEdit = () => {
     setEditingId(null);
-    setNewExercise({ name: '', muscle: 'pernas', reps: '8-10', weight: '0 kg', image: '' });
+    setNewExercise({ 
+      name: '', 
+      muscle: 'pernas', 
+      reps: '', 
+      sets: '', 
+      weight: '', 
+      restTime: '60',
+      image: '' 
+    });
     setShowForm(false);
   };
 
@@ -532,22 +569,36 @@ const BibliotecaScreen = (props) => {
                 <option value="cardio">Cardio</option>
                 <option value="funcional">Funcional</option>
               </select>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <input
                   type="text"
-                  placeholder="Repetições"
+                  placeholder="Séries (ex: 3)"
+                  value={newExercise.sets}
+                  onChange={(e) => setNewExercise(prev => ({ ...prev, sets: e.target.value }))}
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                />
+                <input
+                  type="text"
+                  placeholder="Repetições (ex: 8-10)"
                   value={newExercise.reps}
                   onChange={(e) => setNewExercise(prev => ({ ...prev, reps: e.target.value }))}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
                 />
                 <input
                   type="text"
-                  placeholder="Peso"
+                  placeholder="Peso (ex: 20kg)"
                   value={newExercise.weight}
                   onChange={(e) => setNewExercise(prev => ({ ...prev, weight: e.target.value }))}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
                 />
               </div>
+              <input
+                type="text"
+                placeholder="Tempo de descanso em segundos (ex: 60)"
+                value={newExercise.restTime}
+                onChange={(e) => setNewExercise(prev => ({ ...prev, restTime: e.target.value }))}
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+              />
               <div className="flex gap-2">
                 <button
                   onClick={() => setImageInputType('url')}
@@ -618,38 +669,44 @@ const BibliotecaScreen = (props) => {
       {/* Lista de Exercícios */}
       <div className="px-6">
         <div className="space-y-4">
-          {exerciciosDoDia.map(exercise => (
-            <div
-              key={exercise.id}
-              className={`bg-white/5 rounded-lg p-4 text-white flex gap-3 items-center cursor-pointer hover:bg-white/10 transition-colors group border border-white/10 ${editingId === exercise.id ? 'ring-2 ring-blue-500' : ''}`}
-              onClick={() => handleEditClick(exercise)}
-            >
-              {exercise.image && (
-                <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                  <img 
-                    src={exercise.image} 
-                    alt={exercise.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      if (e.target) e.target.style.display = 'none';
-                    }}
-                  />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-lg truncate">{exercise.name}</div>
-                <div className="text-sm text-gray-400 truncate">{exercise.reps} reps - {exercise.weight}</div>
-                <div className="text-xs text-blue-400 mt-1 capitalize">{exercise.muscle}</div>
-              </div>
-              <button
-                className="ml-2 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 rounded hover:bg-red-500 hover:text-white"
-                onClick={e => { e.stopPropagation(); handleDelete(exercise.id); }}
-                title="Deletar exercício"
+          {exerciciosDoDia.map(exercise => {
+            const workoutItem = (props.workoutPlan[props.selectedDay] || []).find(item => item.exerciseId === exercise.id);
+            const sets = workoutItem ? workoutItem.sets : 3;
+            return (
+              <div
+                key={exercise.id}
+                className={`bg-white/5 rounded-lg p-4 text-white flex gap-3 items-center cursor-pointer hover:bg-white/10 transition-colors group border border-white/10 ${editingId === exercise.id ? 'ring-2 ring-blue-500' : ''}`}
+                onClick={() => handleEditClick(exercise)}
               >
-                <Trash className="w-5 h-5" />
-              </button>
-            </div>
-          ))}
+                {exercise.image && (
+                  <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                    <img 
+                      src={exercise.image} 
+                      alt={exercise.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        if (e.target) e.target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-lg truncate">{exercise.name}</div>
+                  <div className="text-sm text-gray-400 truncate">
+                    {sets} × {exercise.reps || '8-10'} reps - {exercise.weight || '0 kg'}
+                  </div>
+                  <div className="text-xs text-blue-400 mt-1 capitalize">{exercise.muscle}</div>
+                </div>
+                <button
+                  className="ml-2 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 rounded hover:bg-red-500 hover:text-white"
+                  onClick={e => { e.stopPropagation(); handleDelete(exercise.id); }}
+                  title="Deletar exercício"
+                >
+                  <Trash className="w-5 h-5" />
+                </button>
+              </div>
+            );
+          })}
           {exerciciosDoDia.length === 0 && (
             <div className="text-center py-12">
               <Clock className="w-12 h-12 text-gray-500 mx-auto mb-4" />
@@ -673,51 +730,51 @@ export default function App() {
   const [exercises, setExercises] = useState(exerciciosExemplo);
   const [workoutPlan, setWorkoutPlan] = useState({
     'Domingo': [
-      { exerciseId: 1, sets: 4, completedSets: 0 },
-      { exerciseId: 2, sets: 4, completedSets: 0 },
-      { exerciseId: 3, sets: 4, completedSets: 0 },
-      { exerciseId: 4, sets: 3, completedSets: 0 },
-      { exerciseId: 5, sets: 4, completedSets: 0 }
+      { exerciseId: 1, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 2, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 3, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 4, sets: 3, completedSets: 0, restTime: 60 },
+      { exerciseId: 5, sets: 4, completedSets: 0, restTime: 60 }
     ],
     'Segunda': [
-      { exerciseId: 6, sets: 4, completedSets: 0 },
-      { exerciseId: 7, sets: 4, completedSets: 0 },
-      { exerciseId: 8, sets: 3, completedSets: 0 },
-      { exerciseId: 9, sets: 4, completedSets: 0 },
-      { exerciseId: 10, sets: 3, completedSets: 0 },
-      { exerciseId: 11, sets: 4, completedSets: 0 }
+      { exerciseId: 6, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 7, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 8, sets: 3, completedSets: 0, restTime: 60 },
+      { exerciseId: 9, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 10, sets: 3, completedSets: 0, restTime: 60 },
+      { exerciseId: 11, sets: 4, completedSets: 0, restTime: 60 }
     ],
     'Terça': [
-      { exerciseId: 12, sets: 4, completedSets: 0 },
-      { exerciseId: 13, sets: 4, completedSets: 0 },
-      { exerciseId: 14, sets: 4, completedSets: 0 },
-      { exerciseId: 15, sets: 4, completedSets: 0 },
-      { exerciseId: 16, sets: 3, completedSets: 0 },
-      { exerciseId: 17, sets: 4, completedSets: 0 }
+      { exerciseId: 12, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 13, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 14, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 15, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 16, sets: 3, completedSets: 0, restTime: 60 },
+      { exerciseId: 17, sets: 4, completedSets: 0, restTime: 60 }
     ],
     'Quarta': [],
     'Quinta': [
-      { exerciseId: 18, sets: 4, completedSets: 0 },
-      { exerciseId: 19, sets: 4, completedSets: 0 },
-      { exerciseId: 20, sets: 3, completedSets: 0 },
-      { exerciseId: 21, sets: 4, completedSets: 0 },
-      { exerciseId: 22, sets: 3, completedSets: 0 },
-      { exerciseId: 23, sets: 4, completedSets: 0 }
+      { exerciseId: 18, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 19, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 20, sets: 3, completedSets: 0, restTime: 60 },
+      { exerciseId: 21, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 22, sets: 3, completedSets: 0, restTime: 60 },
+      { exerciseId: 23, sets: 4, completedSets: 0, restTime: 60 }
     ],
     'Sexta': [
-      { exerciseId: 24, sets: 4, completedSets: 0 },
-      { exerciseId: 25, sets: 3, completedSets: 0 },
-      { exerciseId: 26, sets: 4, completedSets: 0 },
-      { exerciseId: 27, sets: 3, completedSets: 0 },
-      { exerciseId: 28, sets: 3, completedSets: 0 }
+      { exerciseId: 24, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 25, sets: 3, completedSets: 0, restTime: 60 },
+      { exerciseId: 26, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 27, sets: 3, completedSets: 0, restTime: 60 },
+      { exerciseId: 28, sets: 3, completedSets: 0, restTime: 60 }
     ],
     'Sábado': [
-      { exerciseId: 29, sets: 4, completedSets: 0 },
-      { exerciseId: 30, sets: 3, completedSets: 0 },
-      { exerciseId: 31, sets: 3, completedSets: 0 },
-      { exerciseId: 32, sets: 3, completedSets: 0 },
-      { exerciseId: 33, sets: 3, completedSets: 0 },
-      { exerciseId: 34, sets: 4, completedSets: 0 }
+      { exerciseId: 29, sets: 4, completedSets: 0, restTime: 60 },
+      { exerciseId: 30, sets: 3, completedSets: 0, restTime: 60 },
+      { exerciseId: 31, sets: 3, completedSets: 0, restTime: 60 },
+      { exerciseId: 32, sets: 3, completedSets: 0, restTime: 60 },
+      { exerciseId: 33, sets: 3, completedSets: 0, restTime: 60 },
+      { exerciseId: 34, sets: 4, completedSets: 0, restTime: 60 }
     ]
   });
 
