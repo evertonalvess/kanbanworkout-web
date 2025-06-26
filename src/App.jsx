@@ -3,6 +3,7 @@ import { Plus, Info, Check, Play, Pause, SkipForward, Clock, Trash } from 'lucid
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useKeenSlider } from 'keen-slider/react';
 import 'keen-slider/keen-slider.min.css';
+import { useSupabase } from './hooks/useSupabase';
 
 // Tokens do Sistema de Design
 const theme = {
@@ -21,55 +22,6 @@ const theme = {
     button: 24
   }
 };
-
-// Modelos de Dados
-const exerciciosExemplo = [
-  // Domingo – Pernas (foco quadríceps)
-  { id: 1, name: 'Agachamento livre', muscle: 'pernas', reps: '4 × 8-10', weight: '20 kg', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=300&h=200&fit=crop&crop=center' },
-  { id: 2, name: 'Leg press', muscle: 'pernas', reps: '4 × 10-12', weight: '50 kg cada lado', image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=300&h=200&fit=crop&crop=center' },
-  { id: 3, name: 'Cadeira extensora', muscle: 'pernas', reps: '4 × 12', weight: '68 kg', image: '/Imagens/cadeira_flexora.png' },
-  { id: 4, name: 'Afundo c/ halteres', muscle: 'pernas', reps: '3 × 10 por perna', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=300&h=200&fit=crop&crop=center' },
-  { id: 5, name: 'Panturrilha em pé', muscle: 'pernas', reps: '4 × 15', weight: 'Peso corporal', image: '/Imagens/Panturrilha_sentada.png' },
-  
-  // Segunda – Peito + tríceps
-  { id: 6, name: 'Supino reto', muscle: 'peito', reps: '4 × 8', weight: '≥ 22 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 7, name: 'Supino inclinado', muscle: 'peito', reps: '4 × 10', weight: '17 kg (livre) ou 27 kg (máquina)', image: 'https://images.unsplash.com/photo-1594737625785-a6cbdabd333c?w=300&h=200&fit=crop&crop=center' },
-  { id: 8, name: 'Crossover', muscle: 'peito', reps: '3 × 12', weight: 'Substitui crucifixo 65', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 9, name: 'Tríceps pulley', muscle: 'bracos', reps: '4 × 12', weight: '25 kg ou nível 10', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 10, name: 'Mergulho', muscle: 'bracos', reps: '3 × 10', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 11, name: 'Abdominal meia-bola', muscle: 'abdomen', reps: '4 × 15', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  
-  // Terça – Costas + bíceps
-  { id: 12, name: 'Barra fixa', muscle: 'costas', reps: '4 × máx.', weight: '20 kg lastro', image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=300&h=200&fit=crop&crop=center' },
-  { id: 13, name: 'Remada curvada', muscle: 'costas', reps: '4 × 10', weight: '35 kg', image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=300&h=200&fit=crop&crop=center' },
-  { id: 14, name: 'Pulley frente', muscle: 'costas', reps: '4 × 12', weight: '42 kg', image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=300&h=200&fit=crop&crop=center' },
-  { id: 15, name: 'Rosca direta', muscle: 'bracos', reps: '4 × 10', weight: '14 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 16, name: 'Rosca alternada', muscle: 'bracos', reps: '3 × 12', weight: '12 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 17, name: 'Abdominal paralela meia-bola', muscle: 'abdomen', reps: '4 × 15', weight: 'Peso corporal', image: '/Imagens/Abdominal_paralela_meia_bola.png' },
-  
-  // Quinta – Pernas (foco posterior)
-  { id: 18, name: 'Stiff', muscle: 'pernas', reps: '4 × 10', weight: '≥ 40 kg (barra 20 kg + 30 kg anilhas)', image: '/Imagens/Stiff.png' },
-  { id: 19, name: 'Mesa flexora', muscle: 'pernas', reps: '4 × 12', weight: '≥ 35 kg', image: '/Imagens/mesa_flexora.png' },
-  { id: 20, name: 'Levantamento terra', muscle: 'pernas', reps: '3 × 8', weight: '≥ 35 kg', image: '/Imagens/Levantamento terra.png' },
-  { id: 21, name: 'Panturrilha sentada', muscle: 'pernas', reps: '4 × 15', weight: 'Peso corporal', image: '/Imagens/Panturrilha_sentada.png' },
-  { id: 22, name: 'Passada', muscle: 'pernas', reps: '3 × 10 por perna', weight: '8 kg', image: '/Imagens/passada.png' },
-  { id: 23, name: 'Abdominal paralela meia-bola', muscle: 'abdomen', reps: '4 × 15', weight: 'Peso corporal', image: '/Imagens/Abdominal_paralela_meia_bola.png' },
-  
-  // Sexta – Peito + ombro
-  { id: 24, name: 'Supino declinado', muscle: 'peito', reps: '4 × 10 (24)', weight: '35 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 25, name: 'Crucifixo reto', muscle: 'peito', reps: '3 × 12', weight: '57 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 26, name: 'Elevação lateral', muscle: 'ombros', reps: '4 × 12', weight: '8 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 27, name: 'Desenvolvimento c/ halteres', muscle: 'ombros', reps: '3 × 10', weight: '18 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 28, name: 'Encolhimento', muscle: 'ombros', reps: '3 × 15', weight: '22 kg (halter)', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  
-  // Sábado – Braços (bíceps + tríceps)
-  { id: 29, name: 'Rosca direta barra reta (polia)', muscle: 'bracos', reps: '4 × 10', weight: '28 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 30, name: 'Rosca martelo (polia)', muscle: 'bracos', reps: '3 × 12', weight: '21 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 31, name: 'Rosca unilateral atrás do corpo (polia)', muscle: 'bracos', reps: '3 × 12', weight: '12 kg', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 32, name: 'Tríceps francês', muscle: 'bracos', reps: '3 × 12', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 33, name: 'Tríceps banco', muscle: 'bracos', reps: '3 × 10', weight: 'Peso corporal', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop&crop=center' },
-  { id: 34, name: 'Abdominal paralela meia-bola', muscle: 'abdomen', reps: '4 × 15', weight: 'Peso corporal', image: '/Imagens/Abdominal_paralela_meia_bola.png' }
-];
 
 const gruposMusculares = {
   'pernas': 'Pernas',
@@ -321,14 +273,10 @@ const dias = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sáb
 
 const KanbanWorkoutApp = ({
   exercises,
-  setExercises,
   workoutPlan,
-  setWorkoutPlan,
   selectedDay,
   setSelectedDay,
-  handleAddExercise,
-  handleEditExercise,
-  handleDeleteExercise
+  onSetComplete
 }) => {
   const navigate = useNavigate();
   const [restTimer, setRestTimer] = useState(null);
@@ -358,34 +306,24 @@ const KanbanWorkoutApp = ({
 
   const todaysWorkout = workoutPlan[selectedDay] || [];
 
-  const handleSetComplete = (exerciseId, _setIndex, restTime) => {
-    setWorkoutPlan(prev => ({
-      ...prev,
-      [selectedDay]: prev[selectedDay].map(item => {
-        if (item.exerciseId === exerciseId) {
-          // Se já completou todas as séries, não faz nada
-          if (item.completedSets >= item.sets) return item;
-          // Preenche a próxima série não feita
-          return { ...item, completedSets: item.completedSets + 1, restTime };
-        }
-        return item;
-      })
-    }));
-    setRestTimer({
-      duration: restTime,
-      onComplete: () => setRestTimer(null),
-      onAddTime: () => setRestTimer(prev => ({ ...prev, duration: prev.duration + 15 })),
-      onSkip: () => setRestTimer(null)
-    });
-  };
-
-  const handleStartExercise = (exercise) => {
-    const existingWorkout = todaysWorkout.find(w => w.exerciseId === exercise.id);
-    if (!existingWorkout) {
-      setWorkoutPlan(prev => ({
-        ...prev,
-        [selectedDay]: [...(prev[selectedDay] || []), { exerciseId: exercise.id, sets: 3, completedSets: 0, restTime: 60 }]
-      }));
+  const handleSetComplete = async (exerciseId, _setIndex, restTime) => {
+    try {
+      const currentWorkout = workoutPlan[selectedDay] || [];
+      const workoutItem = currentWorkout.find(item => item.exerciseId === exerciseId);
+      
+      if (workoutItem && workoutItem.completedSets < workoutItem.sets) {
+        await onSetComplete(exerciseId, _setIndex, restTime);
+        
+        // Iniciar timer de descanso
+        setRestTimer({
+          duration: restTime,
+          onComplete: () => setRestTimer(null),
+          onAddTime: () => setRestTimer(prev => ({ ...prev, duration: prev.duration + 15 })),
+          onSkip: () => setRestTimer(null)
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar progresso:', error);
     }
   };
 
@@ -462,7 +400,6 @@ const KanbanWorkoutApp = ({
                       completedSets={workoutItem.completedSets}
                       restTime={workoutItem.restTime}
                       onSetComplete={handleSetComplete}
-                      onStartExercise={handleStartExercise}
                       onImageClick={() => setModalImage(exercise.image)}
                     />
                   );
@@ -935,87 +872,91 @@ export default function App() {
     return days[new Date().getDay()];
   };
   const [selectedDay, setSelectedDay] = useState(getCurrentDay());
-  const [exercises, setExercises] = useState(exerciciosExemplo);
-  const [workoutPlan, setWorkoutPlan] = useState({
-    'Domingo': [
-      { exerciseId: 1, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 2, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 3, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 4, sets: 3, completedSets: 0, restTime: 60 },
-      { exerciseId: 5, sets: 4, completedSets: 0, restTime: 60 }
-    ],
-    'Segunda': [
-      { exerciseId: 6, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 7, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 8, sets: 3, completedSets: 0, restTime: 60 },
-      { exerciseId: 9, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 10, sets: 3, completedSets: 0, restTime: 60 },
-      { exerciseId: 11, sets: 4, completedSets: 0, restTime: 60 }
-    ],
-    'Terça': [
-      { exerciseId: 12, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 13, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 14, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 15, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 16, sets: 3, completedSets: 0, restTime: 60 },
-      { exerciseId: 17, sets: 4, completedSets: 0, restTime: 60 }
-    ],
-    'Quarta': [],
-    'Quinta': [
-      { exerciseId: 18, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 19, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 20, sets: 3, completedSets: 0, restTime: 60 },
-      { exerciseId: 21, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 22, sets: 3, completedSets: 0, restTime: 60 },
-      { exerciseId: 23, sets: 4, completedSets: 0, restTime: 60 }
-    ],
-    'Sexta': [
-      { exerciseId: 24, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 25, sets: 3, completedSets: 0, restTime: 60 },
-      { exerciseId: 26, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 27, sets: 3, completedSets: 0, restTime: 60 },
-      { exerciseId: 28, sets: 3, completedSets: 0, restTime: 60 }
-    ],
-    'Sábado': [
-      { exerciseId: 29, sets: 4, completedSets: 0, restTime: 60 },
-      { exerciseId: 30, sets: 3, completedSets: 0, restTime: 60 },
-      { exerciseId: 31, sets: 3, completedSets: 0, restTime: 60 },
-      { exerciseId: 32, sets: 3, completedSets: 0, restTime: 60 },
-      { exerciseId: 33, sets: 3, completedSets: 0, restTime: 60 },
-      { exerciseId: 34, sets: 4, completedSets: 0, restTime: 60 }
-    ]
-  });
+  
+  // Usar o hook do Supabase
+  const {
+    exercises,
+    workoutPlan,
+    loading,
+    addExercise,
+    editExercise,
+    deleteExercise,
+    addExerciseToWorkout,
+    updateExerciseProgress
+  } = useSupabase();
 
-  const handleAddExercise = (newExercise) => {
-    setExercises(prev => [...prev, newExercise]);
-  };
-  const handleEditExercise = (edited) => {
-    setExercises(prev => prev.map(ex => ex.id === edited.id ? edited : ex));
-  };
-  const handleDeleteExercise = (id) => {
-    setExercises(prev => prev.filter(ex => ex.id !== id));
-    setWorkoutPlan(prev => {
-      const novo = {};
-      for (const dia in prev) {
-        novo[dia] = prev[dia].filter(item => item.exerciseId !== id);
+  // Handlers que integram com o Supabase
+  const handleAddExercise = async (newExercise) => {
+    try {
+      const exercise = await addExercise(newExercise);
+      // Adicionar ao treino do dia atual se especificado
+      if (newExercise.sets && newExercise.restTime) {
+        await addExerciseToWorkout(
+          selectedDay, 
+          exercise.id, 
+          parseInt(newExercise.sets), 
+          parseInt(newExercise.restTime)
+        );
       }
-      return novo;
-    });
+    } catch (error) {
+      console.error('Erro ao adicionar exercício:', error);
+    }
   };
+
+  const handleEditExercise = async (edited) => {
+    try {
+      await editExercise(edited);
+    } catch (error) {
+      console.error('Erro ao editar exercício:', error);
+    }
+  };
+
+  const handleDeleteExercise = async (id) => {
+    try {
+      await deleteExercise(id);
+    } catch (error) {
+      console.error('Erro ao deletar exercício:', error);
+    }
+  };
+
+  // Handler para atualizar progresso
+  const handleSetComplete = async (exerciseId, _setIndex, restTime) => {
+    try {
+      const currentWorkout = workoutPlan[selectedDay] || [];
+      const workoutItem = currentWorkout.find(item => item.exerciseId === exerciseId);
+      
+      if (workoutItem && workoutItem.completedSets < workoutItem.sets) {
+        const newCompletedSets = workoutItem.completedSets + 1;
+        await updateExerciseProgress(selectedDay, exerciseId, newCompletedSets);
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar progresso:', error);
+    }
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-400">Carregando treinos...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <Routes>
       <Route path="/" element={
         <KanbanWorkoutApp
           exercises={exercises}
-          setExercises={setExercises}
           workoutPlan={workoutPlan}
-          setWorkoutPlan={setWorkoutPlan}
           selectedDay={selectedDay}
           setSelectedDay={setSelectedDay}
-          handleAddExercise={handleAddExercise}
-          handleEditExercise={handleEditExercise}
-          handleDeleteExercise={handleDeleteExercise}
+          onSetComplete={handleSetComplete}
         />
       } />
       <Route path="/biblioteca" element={
@@ -1027,7 +968,6 @@ export default function App() {
           selectedDay={selectedDay}
           setSelectedDay={setSelectedDay}
           workoutPlan={workoutPlan}
-          setWorkoutPlan={setWorkoutPlan}
         />
       } />
     </Routes>

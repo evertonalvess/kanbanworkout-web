@@ -2,11 +2,35 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kanban Workout</title>
+    <meta name="description" content="Organize e registre seus treinos de forma moderna, visual e responsiva. Kanban Workout: seu treino, seu ritmo." />
+    <meta name="theme-color" content="#0E1116" />
+    <meta property="og:title" content="Kanban Workout" />
+    <meta property="og:description" content="Organize e registre seus treinos de forma moderna, visual e responsiva." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/Imagens/Stiff.png" />
+    <meta property="og:url" content="https://kanbanworkout.vercel.app/" />
+    <link rel="icon" type="image/png" href="/Imagens/Stiff.png" />
+    <link rel="apple-touch-icon" href="/Imagens/Stiff.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <style>
+      html, body {
+        background: #0E1116;
+        color: #fff;
+        font-family: 'Inter', 'Segoe UI', 'Roboto', Arial, sans-serif;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
   </head>
   <body>
+    <noscript>
+      <div style="padding:2rem;text-align:center;color:#fff;background:#222;max-width:400px;margin:2rem auto;border-radius:1rem;">
+        Este aplicativo requer JavaScript habilitado.<br/>Por favor, ative o JavaScript no seu navegador.
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
