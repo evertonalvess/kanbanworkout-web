@@ -142,7 +142,7 @@ const ProgressRing = ({ progress, size = 120, strokeWidth = 8 }) => {
   );
 };
 
-const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplete, onStartExercise }) => {
+const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplete, onStartExercise, onImageClick }) => {
   const progress = sets > 0 ? (completedSets / sets) * 100 : 0;
   const isCompleted = completedSets === sets && sets > 0;
 
@@ -151,7 +151,7 @@ const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplet
       <div className="flex gap-4 mb-3">
         {/* Imagem do exercício */}
         {exercise.image && (
-          <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+          <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 cursor-pointer" onClick={onImageClick}>
             <img 
               src={exercise.image} 
               alt={exercise.name}
@@ -166,6 +166,11 @@ const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplet
         <div className="flex justify-between items-start flex-1">
           <div className="flex-1">
             <h3 className="text-white font-semibold text-lg">{exercise.name}</h3>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs text-blue-400 font-medium align-middle" style={{lineHeight: '1.5'}}>
+                {gruposMusculares[exercise.muscle] || exercise.muscle}
+              </span>
+            </div>
             <p className="text-gray-400 text-sm">{sets} × {exercise.reps} reps - {exercise.weight}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -220,6 +225,7 @@ const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplet
 const RestTimer = ({ duration, onComplete, onAddTime, onSkip }) => {
   const [timeLeft, setTimeLeft] = useState(duration);
   const [isActive, setIsActive] = useState(true);
+  const progress = ((duration - timeLeft) / duration) * 100;
 
   useEffect(() => {
     let interval = null;
@@ -242,19 +248,45 @@ const RestTimer = ({ duration, onComplete, onAddTime, onSkip }) => {
 
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-2xl p-8 w-full max-w-sm mx-auto border border-white/10 text-center">
-        <h2 className="text-white text-2xl font-bold mb-6">Descanso</h2>
-        <div className="text-6xl font-mono text-blue-500 mb-8">{formatTime(timeLeft)}</div>
-        <div className="flex gap-3">
+      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-8 w-full max-w-xs mx-auto border border-white/10 text-center shadow-2xl relative">
+        <h2 className="text-white text-lg font-semibold mb-4 tracking-widest">CRONÔMETRO DE DESCANSO</h2>
+        <div className="flex flex-col items-center justify-center mb-6">
+          <svg width="120" height="120" className="block">
+            <circle
+              cx="60"
+              cy="60"
+              r="54"
+              stroke="#222"
+              strokeWidth="12"
+              fill="none"
+            />
+            <circle
+              cx="60"
+              cy="60"
+              r="54"
+              stroke="#127AFF"
+              strokeWidth="12"
+              fill="none"
+              strokeDasharray={2 * Math.PI * 54}
+              strokeDashoffset={2 * Math.PI * 54 * (1 - progress / 100)}
+              strokeLinecap="round"
+              style={{ transition: 'stroke-dashoffset 0.5s linear' }}
+            />
+          </svg>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl font-mono text-white select-none" style={{ pointerEvents: 'none' }}>
+            {formatTime(timeLeft)}
+          </div>
+        </div>
+        <div className="flex gap-3 justify-center mt-4">
           <button
             onClick={onAddTime}
-            className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors"
+            className="flex-1 bg-white/10 hover:bg-blue-500/20 text-blue-400 py-3 rounded-lg font-medium transition-colors"
           >
-            +15s
+            +15 seg
           </button>
           <button
             onClick={onSkip}
-            className="flex-1 bg-gray-600 text-white py-3 rounded-lg font-medium hover:bg-gray-700 transition-colors"
+            className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors"
           >
             Pular
           </button>
@@ -265,7 +297,7 @@ const RestTimer = ({ duration, onComplete, onAddTime, onSkip }) => {
 };
 
 const AppLayout = ({ children }) => (
-  <div style={{ backgroundColor: theme.colors.background.primary }} className="min-h-screen text-white">
+  <div style={{ backgroundColor: theme.colors.background.primary }} className="min-h-screen flex flex-col text-white">
     {children}
   </div>
 );
@@ -283,6 +315,7 @@ const KanbanWorkoutApp = ({
 }) => {
   const navigate = useNavigate();
   const [restTimer, setRestTimer] = useState(null);
+  const [modalImage, setModalImage] = useState(null);
 
   const todaysWorkout = workoutPlan[selectedDay] || [];
 
@@ -315,35 +348,61 @@ const KanbanWorkoutApp = ({
 
   const getExerciseById = (id) => exercises.find(ex => ex.id === id);
 
+  // Função utilitária para extrair grupos musculares únicos do dia
+  function getMuscleGroupsForDay(workout, getExerciseById) {
+    const ids = workout.map(item => item.exerciseId);
+    const muscles = ids.map(id => {
+      const ex = getExerciseById(id);
+      return ex ? (gruposMusculares[ex.muscle] || ex.muscle) : null;
+    }).filter(Boolean);
+    // Remover duplicados
+    return [...new Set(muscles)];
+  }
+
   return (
     <AppLayout>
-      {/* Cabeçalho */}
-      <div className="px-6 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Treinos</h1>
-          <IconButton onClick={() => navigate('/biblioteca')}>
-            <Plus className="w-5 h-5 text-white" />
-          </IconButton>
-        </div>
-        {/* Seletor de Dia */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {Object.keys(workoutPlan).map(day => (
-            <button
-              key={day}
-              onClick={() => setSelectedDay(day)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
-                selectedDay === day
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white/10 text-gray-400 hover:text-white'
-              }`}
-            >
-              {day}
-            </button>
-          ))}
+      {/* Cabeçalho e seletor de dias fixos */}
+      <div className="sticky top-0 z-20" style={{ backgroundColor: theme.colors.background.primary }}>
+        <div className="px-6 pt-8 pb-2">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold">Treinos</h1>
+              {/* Pills dos grupos musculares */}
+              {(() => {
+                const groups = getMuscleGroupsForDay(todaysWorkout, getExerciseById);
+                return groups.length > 0 ? groups.map((muscle) => (
+                  <span key={muscle} className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/60 text-blue-300 border border-blue-500/30 ml-1 align-middle" style={{lineHeight: '1.5', minWidth: 36, textAlign: 'center'}}>
+                    {muscle}
+                  </span>
+                )) : (
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/60 text-blue-300 border border-blue-500/30 ml-1 align-middle" style={{lineHeight: '1.5', minWidth: 36, textAlign: 'center'}}>—</span>
+                );
+              })()}
+            </div>
+            <IconButton onClick={() => navigate('/biblioteca')}>
+              <Plus className="w-5 h-5 text-white" />
+            </IconButton>
+          </div>
+          {/* Seletor de Dia */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {Object.keys(workoutPlan).map(day => (
+              <button
+                key={day}
+                onClick={() => setSelectedDay(day)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
+                  selectedDay === day
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white/10 text-gray-400 hover:text-white'
+                }`}
+              >
+                {day}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-      {/* Lista de Treinos */}
-      <div className="px-6">
+      {/* Lista de Treinos rolável */}
+      <div className="flex-1 overflow-y-auto px-6 pt-2 pb-8">
         <div className="space-y-4">
           {todaysWorkout.map((workoutItem, index) => {
             const exercise = getExerciseById(workoutItem.exerciseId);
@@ -357,6 +416,7 @@ const KanbanWorkoutApp = ({
                 restTime={workoutItem.restTime}
                 onSetComplete={handleSetComplete}
                 onStartExercise={handleStartExercise}
+                onImageClick={() => setModalImage(exercise.image)}
               />
             );
           })}
@@ -369,6 +429,17 @@ const KanbanWorkoutApp = ({
           )}
         </div>
       </div>
+      {/* Modal de Imagem */}
+      {modalImage && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" onClick={() => setModalImage(null)}>
+          <div className="relative" onClick={e => e.stopPropagation()}>
+            <img src={modalImage} alt="Exercício" className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-2xl" />
+            <button onClick={() => setModalImage(null)} className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2">
+              <Plus className="w-6 h-6 transform rotate-45" />
+            </button>
+          </div>
+        </div>
+      )}
       {/* Modal do Cronômetro de Descanso */}
       {restTimer && (
         <RestTimer
@@ -397,6 +468,7 @@ const BibliotecaScreen = (props) => {
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const fileInputRef = useRef(null);
+  const formRef = useRef(null);
 
   // Filtrar exercícios do dia
   const idsDoDia = (props.workoutPlan[props.selectedDay] || []).map(item => item.exerciseId);
@@ -478,7 +550,6 @@ const BibliotecaScreen = (props) => {
 
   const handleEditClick = (exercise) => {
     const parsedData = parseExerciseData(exercise);
-    
     setNewExercise({
       name: exercise.name,
       muscle: exercise.muscle,
@@ -491,6 +562,18 @@ const BibliotecaScreen = (props) => {
     setEditingId(exercise.id);
     setImageInputType(exercise.image ? 'url' : 'url');
     setShowForm(true);
+    setTimeout(() => {
+      if (formRef.current) {
+        // Calcular altura do cabeçalho fixo
+        const header = document.querySelector('.sticky.top-0');
+        const headerHeight = header ? header.offsetHeight : 0;
+        const formTop = formRef.current.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({
+          top: formTop - headerHeight - 8, // 8px de margem extra
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
   };
 
   const handleDelete = (id) => {
@@ -531,42 +614,63 @@ const BibliotecaScreen = (props) => {
 
   return (
     <AppLayout>
-      {/* Cabeçalho */}
-      <div className="px-6 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Biblioteca de Exercícios</h1>
-          <div className="flex gap-2">
-            {!showForm && (
-              <IconButton onClick={() => setShowForm(true)}>
-                <Plus className="w-5 h-5 text-white" />
+      {/* Cabeçalho e seletor de dias fixos */}
+      <div className="sticky top-0 z-20" style={{ backgroundColor: theme.colors.background.primary }}>
+        <div className="px-6 pt-8 pb-2">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold">Exercícios</h1>
+              {/* Pills dos grupos musculares */}
+              {(() => {
+                let groups = [];
+                if (showForm && newExercise.muscle) {
+                  groups = [gruposMusculares[newExercise.muscle] || newExercise.muscle];
+                } else if (exerciciosDoDia.length > 0) {
+                  groups = [...new Set(exerciciosDoDia.map(ex => gruposMusculares[ex.muscle] || ex.muscle))];
+                }
+                return groups.length > 0 ? groups.map((muscle) => (
+                  <span key={muscle} className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/60 text-blue-300 border border-blue-500/30 ml-1 align-middle" style={{lineHeight: '1.5', minWidth: 36, textAlign: 'center'}}>
+                    {muscle}
+                  </span>
+                )) : (
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/60 text-blue-300 border border-blue-500/30 ml-1 align-middle" style={{lineHeight: '1.5', minWidth: 36, textAlign: 'center'}}>—</span>
+                );
+              })()}
+            </div>
+            <div className="flex gap-2">
+              {!showForm && (
+                <IconButton onClick={() => setShowForm(true)}>
+                  <Plus className="w-5 h-5 text-white" />
+                </IconButton>
+              )}
+              <IconButton onClick={() => navigate('/') }>
+                <Plus className="w-5 h-5 transform rotate-45" />
               </IconButton>
-            )}
-            <IconButton onClick={() => navigate('/')}>
-              <Plus className="w-5 h-5 transform rotate-45" />
-            </IconButton>
+            </div>
+          </div>
+          {/* Seletor de Dia */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {Object.keys(props.workoutPlan).map(day => (
+              <button
+                key={day}
+                onClick={() => props.setSelectedDay(day)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
+                  props.selectedDay === day
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white/10 text-gray-400 hover:text-white'
+                }`}
+              >
+                {day}
+              </button>
+            ))}
           </div>
         </div>
-        
-        {/* Seletor de Dia */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-6">
-          {Object.keys(props.workoutPlan).map(day => (
-            <button
-              key={day}
-              onClick={() => props.setSelectedDay(day)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
-                props.selectedDay === day
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white/10 text-gray-400 hover:text-white'
-              }`}
-            >
-              {day}
-            </button>
-          ))}
-        </div>
-
+      </div>
+      {/* Formulário e lista de exercícios rolável */}
+      <div className="flex-1 overflow-y-auto px-6 pt-2 pb-8">
         {/* Formulário de Adição/Edição */}
         {showForm && (
-          <div className="bg-white/5 rounded-2xl p-6 mb-6 border border-white/10">
+          <div ref={formRef} className="bg-white/5 rounded-2xl p-6 mb-6 border border-white/10">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-white">
                 {editingId ? 'Editar Exercício' : 'Adicionar Exercício'}
@@ -579,76 +683,100 @@ const BibliotecaScreen = (props) => {
               </button>
             </div>
 
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Nome do exercício"
-                value={newExercise.name}
-                onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              />
-              <select
-                value={newExercise.muscle}
-                onChange={(e) => setNewExercise(prev => ({ ...prev, muscle: e.target.value }))}
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-              >
-                <option value="pernas">Pernas</option>
-                <option value="peito">Peito</option>
-                <option value="costas">Costas</option>
-                <option value="ombros">Ombros</option>
-                <option value="bracos">Braços</option>
-                <option value="abdomen">Abdômen</option>
-                <option value="cardio">Cardio</option>
-                <option value="funcional">Funcional</option>
-              </select>
-              <div className="grid grid-cols-3 gap-2">
+            <div className="space-y-2">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Exercício</label>
                 <input
                   type="text"
-                  placeholder="Séries (ex: 3)"
-                  value={newExercise.sets}
-                  onChange={(e) => setNewExercise(prev => ({ ...prev, sets: e.target.value }))}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Repetições (ex: 8-10)"
-                  value={newExercise.reps}
-                  onChange={(e) => setNewExercise(prev => ({ ...prev, reps: e.target.value }))}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Peso (ex: 20kg)"
-                  value={newExercise.weight}
-                  onChange={(e) => setNewExercise(prev => ({ ...prev, weight: e.target.value }))}
+                  placeholder="Nome do exercício (ex: Stiff)"
+                  value={newExercise.name}
+                  onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
                 />
               </div>
-              <input
-                type="text"
-                placeholder="Tempo de descanso em segundos (ex: 60)"
-                value={newExercise.restTime}
-                onChange={(e) => setNewExercise(prev => ({ ...prev, restTime: e.target.value }))}
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              />
-              <div className="flex gap-2">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Grupo muscular</label>
+                <select
+                  value={newExercise.muscle}
+                  onChange={(e) => setNewExercise(prev => ({ ...prev, muscle: e.target.value }))}
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 pr-8 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 appearance-none"
+                  style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg fill=\'none\' stroke=\'%23999\' stroke-width=\'2\' viewBox=\'0 0 24 24\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1.25em 1.25em' }}
+                >
+                  <option value="pernas">Pernas</option>
+                  <option value="peito">Peito</option>
+                  <option value="costas">Costas</option>
+                  <option value="ombros">Ombros</option>
+                  <option value="bracos">Braços</option>
+                  <option value="abdomen">Abdômen</option>
+                  <option value="cardio">Cardio</option>
+                  <option value="funcional">Funcional</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Séries</label>
+                  <input
+                    type="text"
+                    placeholder="Séries (ex: 3)"
+                    value={newExercise.sets}
+                    onChange={(e) => setNewExercise(prev => ({ ...prev, sets: e.target.value }))}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Repetições</label>
+                  <input
+                    type="text"
+                    placeholder="Repetições (ex: 8-10)"
+                    value={newExercise.reps}
+                    onChange={(e) => setNewExercise(prev => ({ ...prev, reps: e.target.value }))}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Peso</label>
+                  <input
+                    type="text"
+                    placeholder="Peso (ex: 20kg)"
+                    value={newExercise.weight}
+                    onChange={(e) => setNewExercise(prev => ({ ...prev, weight: e.target.value }))}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Descanso (seg)</label>
+                  <input
+                    type="text"
+                    placeholder="Tempo de descanso em segundos (ex: 60)"
+                    value={newExercise.restTime}
+                    onChange={(e) => setNewExercise(prev => ({ ...prev, restTime: e.target.value }))}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              {/* Abas para imagem */}
+              <div className="flex gap-2 mt-3 border-b border-white/10">
                 <button
                   onClick={() => setImageInputType('url')}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    imageInputType === 'url' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-white/10 text-gray-400'
+                  className={`flex-1 px-3 py-2 text-sm font-medium transition-colors border-b-2 ${
+                    imageInputType === 'url'
+                      ? 'border-blue-500 text-blue-400 bg-white/5'
+                      : 'border-transparent text-gray-400 bg-transparent'
                   }`}
+                  style={{ borderRadius: '8px 8px 0 0' }}
                 >
                   Link da Imagem
                 </button>
                 <button
                   onClick={() => setImageInputType('file')}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    imageInputType === 'file' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-white/10 text-gray-400'
+                  className={`flex-1 px-3 py-2 text-sm font-medium transition-colors border-b-2 ${
+                    imageInputType === 'file'
+                      ? 'border-blue-500 text-blue-400 bg-white/5'
+                      : 'border-transparent text-gray-400 bg-transparent'
                   }`}
+                  style={{ borderRadius: '8px 8px 0 0' }}
                 >
                   Upload de Arquivo
                 </button>
@@ -659,10 +787,10 @@ const BibliotecaScreen = (props) => {
                   placeholder="URL da imagem (opcional)"
                   value={newExercise.image}
                   onChange={(e) => setNewExercise(prev => ({ ...prev, image: e.target.value }))}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 mt-2"
                 />
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2 mt-2">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -679,7 +807,7 @@ const BibliotecaScreen = (props) => {
                 </div>
               )}
               {newExercise.image && (
-                <div className="w-full h-32 rounded-lg overflow-hidden bg-white/5">
+                <div className="w-full h-32 rounded-lg overflow-hidden bg-white/5 mt-3">
                   <img 
                     src={newExercise.image} 
                     alt="Preview" 
@@ -690,16 +818,13 @@ const BibliotecaScreen = (props) => {
                   />
                 </div>
               )}
-              <PillButton onClick={handleSubmit} variant="primary" className="w-full">
+              <PillButton onClick={handleSubmit} variant="primary" className="w-full mt-4">
                 {editingId ? 'Salvar Alterações' : 'Adicionar Exercício'}
               </PillButton>
             </div>
           </div>
         )}
-      </div>
-
-      {/* Lista de Exercícios */}
-      <div className="px-6">
+        {/* Lista de Exercícios */}
         <div className="space-y-4">
           {exerciciosDoDia.map(exercise => {
             const workoutItem = (props.workoutPlan[props.selectedDay] || []).find(item => item.exerciseId === exercise.id);
@@ -731,7 +856,7 @@ const BibliotecaScreen = (props) => {
                   <div className="text-xs text-blue-400 mt-1 capitalize">{exercise.muscle}</div>
                 </div>
                 <button
-                  className="ml-2 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 rounded hover:bg-red-500 hover:text-white"
+                  className="ml-2 bg-white/10 hover:bg-white/20 text-gray-400 transition-opacity px-2 py-1 rounded-full focus:outline-none"
                   onClick={e => { e.stopPropagation(); handleDelete(exercise.id); }}
                   title="Deletar exercício"
                 >
