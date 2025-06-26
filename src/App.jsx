@@ -215,11 +215,11 @@ const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplet
           </div>
         )}
         
-        {!isCompleted && sets > 0 && (
+        {/* {!isCompleted && sets > 0 && (
           <PillButton onClick={() => onStartExercise(exercise)} variant="primary">
             Continuar
           </PillButton>
-        )}
+        )} */}
       </div>
     </div>
   );
