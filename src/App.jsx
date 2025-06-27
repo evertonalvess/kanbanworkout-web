@@ -45,18 +45,19 @@ const IconButton = ({ children, onClick, className = '' }) => (
   </button>
 );
 
-const PillButton = ({ children, onClick, variant = 'primary', className = '' }) => {
-  const baseClass = "px-4 py-2 rounded-full text-sm font-medium transition-colors";
-  const variants = {
-    primary: "bg-blue-500 text-white hover:bg-blue-600",
-    secondary: "bg-white/10 text-white hover:bg-white/20",
-    success: "bg-green-500 text-white hover:bg-green-600"
+const PillButton = ({ children, onClick, variant = 'primary', className = '', disabled = false }) => {
+  const baseClasses = 'px-6 py-3 rounded-full font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900';
+  
+  const variantClasses = {
+    primary: 'bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-500',
+    secondary: 'bg-white/10 text-white hover:bg-white/20 focus:ring-white/20'
   };
   
   return (
     <button
       onClick={onClick}
-      className={`${baseClass} ${variants[variant]} ${className}`}
+      disabled={disabled}
+      className={`${baseClasses} ${variantClasses[variant]} ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {children}
     </button>
@@ -97,7 +98,7 @@ const ProgressRing = ({ progress, size = 120, strokeWidth = 8 }) => {
   );
 };
 
-const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplete, onStartExercise, onImageClick }) => {
+const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplete, onImageClick }) => {
   const progress = sets > 0 ? (completedSets / sets) * 100 : 0;
   const isCompleted = completedSets === sets && sets > 0;
 
@@ -145,7 +146,7 @@ const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplet
 
       <div className="flex justify-between items-center">
         {sets === 0 ? (
-          <PillButton onClick={() => onStartExercise(exercise)} variant="secondary">
+          <PillButton onClick={() => onSetComplete(exercise.id, 0, restTime)} variant="secondary">
             <Plus className="w-4 h-4 mr-1" />
             Iniciar Exercício
           </PillButton>
@@ -166,12 +167,6 @@ const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplet
             ))}
           </div>
         )}
-        
-        {/* {!isCompleted && sets > 0 && (
-          <PillButton onClick={() => onStartExercise(exercise)} variant="primary">
-            Continuar
-          </PillButton>
-        )} */}
       </div>
     </div>
   );
@@ -243,7 +238,7 @@ const RestTimer = ({ duration, onComplete, onAddTime, onSkip }) => {
           </svg>
           <span className="absolute inset-0 flex items-center justify-center text-[2.8rem] font-mono text-white select-none font-light" style={{ letterSpacing: '-3px', fontVariantNumeric: 'tabular-nums' }}>
             {formatTime(timeLeft)}
-            </span>
+          </span>
         </div>
         <div className="flex gap-2 justify-center w-full mt-1">
           <button
@@ -490,6 +485,8 @@ const BibliotecaScreen = (props) => {
   const [imageInputType, setImageInputType] = useState('url');
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
 
@@ -532,8 +529,35 @@ const BibliotecaScreen = (props) => {
       sets: sets || '',
       reps: reps || '',
       weight: exercise.weight || '',
-      restTime: exercise.restTime || '60'
+      restTime: exercise.rest_time || exercise.restTime || '60'
     };
+  };
+
+  // Funções de validação
+  const validateNumericField = (value, fieldName) => {
+    if (!value) return '';
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue <= 0) {
+      return `${fieldName} deve ser um número maior que zero`;
+    }
+    return '';
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!newExercise.name.trim()) {
+      newErrors.name = 'Nome do exercício é obrigatório';
+    }
+    
+    const setsError = validateNumericField(newExercise.sets, 'Séries');
+    if (setsError) newErrors.sets = setsError;
+    
+    const restTimeError = validateNumericField(newExercise.restTime, 'Tempo de descanso');
+    if (restTimeError) newErrors.restTime = restTimeError;
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleImageUpload = (event) => {
@@ -547,14 +571,23 @@ const BibliotecaScreen = (props) => {
     }
   };
 
-  const handleSubmit = () => {
-    if (newExercise.name.trim()) {
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
       let newId = editingId ? editingId : Date.now();
+      
       if (editingId) {
-        props.onEditExercise({ ...newExercise, id: editingId });
+        await props.onEditExercise({ ...newExercise, id: editingId });
       } else {
-        props.onAddExercise({ ...newExercise, id: newId });
+        await props.onAddExercise({ ...newExercise, id: newId });
       }
+      
       // Atualiza o plano do dia
       props.setWorkoutPlan(prev => {
         const atual = prev[props.selectedDay] || [];
@@ -566,6 +599,7 @@ const BibliotecaScreen = (props) => {
           return { ...prev, [props.selectedDay]: atual.map(item => item.exerciseId === editingId ? { ...item, exerciseId: editingId, sets, restTime } : item) };
         }
       });
+      
       setNewExercise({ 
         name: '', 
         muscle: 'pernas', 
@@ -577,11 +611,19 @@ const BibliotecaScreen = (props) => {
       });
       setEditingId(null);
       setShowForm(false);
+    } catch (error) {
+      console.error('Erro ao salvar exercício:', error);
+      setErrors({ submit: error?.message || JSON.stringify(error) || 'Erro ao salvar exercício. Tente novamente.' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleEditClick = (exercise) => {
+    console.log('Editando exercício:', exercise.name, 'Muscle:', exercise.muscle, 'RestTime:', exercise.rest_time || exercise.restTime);
     const parsedData = parseExerciseData(exercise);
+    console.log('Dados parseados:', parsedData);
+    
     setNewExercise({
       name: exercise.name,
       muscle: exercise.muscle,
@@ -594,6 +636,8 @@ const BibliotecaScreen = (props) => {
     setEditingId(exercise.id);
     setImageInputType(exercise.image ? 'url' : 'url');
     setShowForm(true);
+    setErrors({});
+    
     setTimeout(() => {
       if (formRef.current) {
         // Calcular altura do cabeçalho fixo
@@ -642,6 +686,21 @@ const BibliotecaScreen = (props) => {
       image: '' 
     });
     setShowForm(false);
+  };
+
+  const clearError = (field) => {
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleFieldChange = (field, value) => {
+    setNewExercise(prev => ({ ...prev, [field]: value }));
+    clearError(field);
   };
 
   return (
@@ -727,15 +786,16 @@ const BibliotecaScreen = (props) => {
             type="text"
                   placeholder="Nome do exercício (ex: Stiff)"
             value={newExercise.name}
-            onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
-            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+            onChange={(e) => handleFieldChange('name', e.target.value)}
+            className={`w-full bg-white/10 border rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 ${errors.name ? 'border-red-500' : 'border-white/20'}`}
           />
+          {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
               </div>
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Grupo muscular</label>
           <select
             value={newExercise.muscle}
-            onChange={(e) => setNewExercise(prev => ({ ...prev, muscle: e.target.value }))}
+            onChange={(e) => handleFieldChange('muscle', e.target.value)}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 pr-8 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 appearance-none"
                   style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg fill=\'none\' stroke=\'%23999\' stroke-width=\'2\' viewBox=\'0 0 24 24\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1.25em 1.25em' }}
           >
@@ -756,9 +816,10 @@ const BibliotecaScreen = (props) => {
                     type="text"
                     placeholder="Séries (ex: 3)"
                     value={newExercise.sets}
-                    onChange={(e) => setNewExercise(prev => ({ ...prev, sets: e.target.value }))}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                    onChange={(e) => handleFieldChange('sets', e.target.value)}
+                    className={`w-full bg-white/10 border rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 ${errors.sets ? 'border-red-500' : 'border-white/20'}`}
                   />
+                  {errors.sets && <p className="text-red-400 text-xs mt-1">{errors.sets}</p>}
                 </div>
                 <div>
                   <label className="block text-xs text-gray-400 mb-1">Repetições</label>
@@ -766,7 +827,7 @@ const BibliotecaScreen = (props) => {
               type="text"
                     placeholder="Repetições (ex: 8-10)"
               value={newExercise.reps}
-              onChange={(e) => setNewExercise(prev => ({ ...prev, reps: e.target.value }))}
+              onChange={(e) => handleFieldChange('reps', e.target.value)}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
             />
                 </div>
@@ -778,7 +839,7 @@ const BibliotecaScreen = (props) => {
               type="text"
                     placeholder="Peso (ex: 20kg)"
               value={newExercise.weight}
-              onChange={(e) => setNewExercise(prev => ({ ...prev, weight: e.target.value }))}
+              onChange={(e) => handleFieldChange('weight', e.target.value)}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -788,9 +849,10 @@ const BibliotecaScreen = (props) => {
                     type="text"
                     placeholder="Tempo de descanso em segundos (ex: 60)"
                     value={newExercise.restTime}
-                    onChange={(e) => setNewExercise(prev => ({ ...prev, restTime: e.target.value }))}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                    onChange={(e) => handleFieldChange('restTime', e.target.value)}
+                    className={`w-full bg-white/10 border rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 ${errors.restTime ? 'border-red-500' : 'border-white/20'}`}
             />
+                  {errors.restTime && <p className="text-red-400 text-xs mt-1">{errors.restTime}</p>}
           </div>
               </div>
               {/* Abas para imagem */}
@@ -823,7 +885,7 @@ const BibliotecaScreen = (props) => {
               type="url"
               placeholder="URL da imagem (opcional)"
               value={newExercise.image}
-              onChange={(e) => setNewExercise(prev => ({ ...prev, image: e.target.value }))}
+              onChange={(e) => handleFieldChange('image', e.target.value)}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 mt-2"
             />
           ) : (
@@ -855,8 +917,21 @@ const BibliotecaScreen = (props) => {
               />
             </div>
           )}
-              <PillButton onClick={handleSubmit} variant="primary" className="w-full mt-4">
-                {editingId ? 'Salvar Alterações' : 'Adicionar Exercício'}
+              {errors.submit && <p className="text-red-400 text-sm mt-2 text-center">{errors.submit}</p>}
+              <PillButton 
+                onClick={handleSubmit} 
+                variant="primary" 
+                className={`w-full mt-4 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    {editingId ? 'Salvando...' : 'Adicionando...'}
+                  </div>
+                ) : (
+                  editingId ? 'Salvar Alterações' : 'Adicionar Exercício'
+                )}
           </PillButton>
         </div>
           </div>
@@ -960,7 +1035,8 @@ export default function App() {
     editExercise,
     deleteExercise,
     addExerciseToWorkout,
-    updateExerciseProgress
+    updateExerciseProgress,
+    setWorkoutPlan
   } = useSupabase();
 
   // Handlers que integram com o Supabase
@@ -1046,6 +1122,7 @@ export default function App() {
           selectedDay={selectedDay}
           setSelectedDay={setSelectedDay}
           workoutPlan={workoutPlan}
+          setWorkoutPlan={setWorkoutPlan}
         />
       } />
     </Routes>

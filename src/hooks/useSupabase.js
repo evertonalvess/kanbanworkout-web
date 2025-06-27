@@ -211,6 +211,7 @@ export const useSupabase = () => {
     addExerciseToWorkout,
     updateExerciseProgress,
     loadExercises,
-    loadWorkoutPlan
+    loadWorkoutPlan,
+    setWorkoutPlan
   }
 } 
