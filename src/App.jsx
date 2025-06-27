@@ -4,6 +4,7 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useKeenSlider } from 'keen-slider/react';
 import 'keen-slider/keen-slider.min.css';
 import { useSupabase } from './hooks/useSupabase';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 // Tokens do Sistema de Design
 const theme = {
@@ -242,7 +243,7 @@ const RestTimer = ({ duration, onComplete, onAddTime, onSkip }) => {
           </svg>
           <span className="absolute inset-0 flex items-center justify-center text-[2.8rem] font-mono text-white select-none font-light" style={{ letterSpacing: '-3px', fontVariantNumeric: 'tabular-nums' }}>
             {formatTime(timeLeft)}
-          </span>
+            </span>
         </div>
         <div className="flex gap-2 justify-center w-full mt-1">
           <button
@@ -345,24 +346,30 @@ const KanbanWorkoutApp = ({
       {/* Cabeçalho e seletor de dias fixos */}
       <div className="sticky top-0 z-20" style={{ backgroundColor: theme.colors.background.primary }}>
         <div className="px-6 pt-8 pb-2">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">Treinos</h1>
-              {/* Pills dos grupos musculares */}
-              {(() => {
-                const groups = getMuscleGroupsForDay(todaysWorkout, getExerciseById);
-                return groups.length > 0 ? groups.map((muscle) => (
-                  <span key={muscle} className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/60 text-blue-300 border border-blue-500/30 ml-1 align-middle" style={{lineHeight: '1.5', minWidth: 36, textAlign: 'center'}}>
-                    {muscle}
-                  </span>
-                )) : (
-                  <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/60 text-blue-300 border border-blue-500/30 ml-1 align-middle" style={{lineHeight: '1.5', minWidth: 36, textAlign: 'center'}}>—</span>
-                );
-              })()}
+          <div className="flex items-center mb-4 relative w-full">
+            <h1 className="text-3xl font-bold flex-shrink-0 mr-2">Treinos</h1>
+            <div className="relative flex-1 min-w-0 flex items-center">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide no-scrollbar pr-12 w-full items-center" style={{ WebkitOverflowScrolling: 'touch' }}>
+                {(() => {
+                  const groups = getMuscleGroupsForDay(todaysWorkout, getExerciseById);
+                  return groups.length > 0 ? groups.map((muscle) => (
+                    <span key={muscle} className="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-blue-900/60 text-blue-300 border border-blue-500/30 align-middle whitespace-nowrap text-center" style={{lineHeight: '1.5', minWidth: 36}}>
+                      {muscle}
+                    </span>
+                  )) : (
+                    <span className="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-blue-900/60 text-blue-300 border border-blue-500/30 align-middle whitespace-nowrap text-center" style={{lineHeight: '1.5', minWidth: 36}}>—</span>
+                  );
+                })()}
+              </div>
+              {/* Gradiente para indicar overflow */}
+              <div className="pointer-events-none absolute right-0 top-0 h-full w-12" style={{background: 'linear-gradient(to right, transparent, '+theme.colors.background.primary+' 80%)'}} />
             </div>
-            <IconButton onClick={() => navigate('/biblioteca')}>
-              <Plus className="w-5 h-5 text-white" />
-            </IconButton>
+            {/* Botão + sempre visível */}
+            <div className="flex-shrink-0 ml-2 z-10 absolute right-0 top-1/2 -translate-y-1/2">
+              <IconButton onClick={() => navigate('/biblioteca')}>
+                <Plus className="w-5 h-5 text-white" />
+              </IconButton>
+            </div>
           </div>
           {/* Seletor de Dia */}
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
@@ -460,6 +467,15 @@ const BibliotecaScreen = (props) => {
   // Filtrar exercícios do dia
   const idsDoDia = (props.workoutPlan[props.selectedDay] || []).map(item => item.exerciseId);
   const exerciciosDoDia = props.exercises.filter(ex => idsDoDia.includes(ex.id));
+
+  // Ordenar exerciciosDoDia pelo campo 'order' se existir
+  const exerciciosOrdenados = [...exerciciosDoDia].sort((a, b) => {
+    const workoutA = (props.workoutPlan[props.selectedDay] || []).find(item => item.exerciseId === a.id);
+    const workoutB = (props.workoutPlan[props.selectedDay] || []).find(item => item.exerciseId === b.id);
+    const orderA = workoutA && typeof workoutA.order === 'number' ? workoutA.order : 9999;
+    const orderB = workoutB && typeof workoutB.order === 'number' ? workoutB.order : 9999;
+    return orderA - orderB;
+  });
 
   // Função para fazer parsing dos dados existentes
   const parseExerciseData = (exercise) => {
@@ -604,36 +620,46 @@ const BibliotecaScreen = (props) => {
       {/* Cabeçalho e seletor de dias fixos */}
       <div className="sticky top-0 z-20" style={{ backgroundColor: theme.colors.background.primary }}>
         <div className="px-6 pt-8 pb-2">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">Exercícios</h1>
-              {/* Pills dos grupos musculares */}
-              {(() => {
-                let groups = [];
-                if (showForm && newExercise.muscle) {
-                  groups = [gruposMusculares[newExercise.muscle] || newExercise.muscle];
-                } else if (exerciciosDoDia.length > 0) {
-                  groups = [...new Set(exerciciosDoDia.map(ex => gruposMusculares[ex.muscle] || ex.muscle))];
-                }
-                return groups.length > 0 ? groups.map((muscle) => (
-                  <span key={muscle} className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/60 text-blue-300 border border-blue-500/30 ml-1 align-middle" style={{lineHeight: '1.5', minWidth: 36, textAlign: 'center'}}>
-                    {muscle}
-                  </span>
-                )) : (
-                  <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/60 text-blue-300 border border-blue-500/30 ml-1 align-middle" style={{lineHeight: '1.5', minWidth: 36, textAlign: 'center'}}>—</span>
-                );
-              })()}
+          <div className="flex items-center mb-4 relative w-full">
+            <h1 className="text-3xl font-bold flex-shrink-0 mr-2">Exercícios</h1>
+            <div className="relative flex-1 min-w-0 flex items-center z-0">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide no-scrollbar pr-12 w-full items-center" style={{ WebkitOverflowScrolling: 'touch' }}>
+                {(() => {
+                  let groups = [];
+                  if (showForm && newExercise.muscle) {
+                    groups = [gruposMusculares[newExercise.muscle] || newExercise.muscle];
+                  } else if (exerciciosOrdenados.length > 0) {
+                    groups = [...new Set(exerciciosOrdenados.map(ex => gruposMusculares[ex.muscle] || ex.muscle))];
+                  }
+                  return groups.length > 0 ? groups.map((muscle) => (
+                    <span key={muscle} className="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-blue-900/60 text-blue-300 border border-blue-500/30 align-middle whitespace-nowrap text-center" style={{lineHeight: '1.5', minWidth: 36}}>
+                      {muscle}
+                    </span>
+                  )) : (
+                    <span className="inline-block px-3 py-0.5 rounded-full text-xs font-medium bg-blue-900/60 text-blue-300 border border-blue-500/30 align-middle whitespace-nowrap text-center" style={{lineHeight: '1.5', minWidth: 36}}>—</span>
+                  );
+                })()}
+              </div>
+              <div className="pointer-events-none absolute right-0 top-0 h-full w-12" style={{background: 'linear-gradient(to right, transparent, '+theme.colors.background.primary+' 80%)'}} />
             </div>
-            <div className="flex gap-2">
-              {!showForm && (
-                <IconButton onClick={() => setShowForm(true)}>
-                  <Plus className="w-5 h-5 text-white" />
-                </IconButton>
-              )}
-              <IconButton onClick={() => navigate('/') }>
-                <Plus className="w-5 h-5 transform rotate-45" />
+            {/* Botões + e X sempre visíveis, z-10 para garantir sobreposição */}
+            <div className="flex-shrink-0 ml-2 z-10 absolute right-0 top-1/2 -translate-y-1/2 flex gap-2">
+              <IconButton onClick={() => {
+                setShowForm(true);
+                setEditingId(null);
+                setNewExercise({ name: '', muscle: 'pernas', reps: '', sets: '', weight: '', restTime: '60', image: '' });
+              }}>
+                <Plus className="w-5 h-5 text-white" />
               </IconButton>
-            </div>
+              <IconButton onClick={() => {
+                setShowForm(false);
+                setEditingId(null);
+                setNewExercise({ name: '', muscle: 'pernas', reps: '', sets: '', weight: '', restTime: '60', image: '' });
+                navigate('/');
+              }}>
+            <Plus className="w-5 h-5 transform rotate-45" />
+          </IconButton>
+        </div>
           </div>
           {/* Seletor de Dia */}
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
@@ -662,42 +688,36 @@ const BibliotecaScreen = (props) => {
               <h2 className="text-xl font-semibold text-white">
                 {editingId ? 'Editar Exercício' : 'Adicionar Exercício'}
               </h2>
-              <button
-                onClick={cancelEdit}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <Plus className="w-5 h-5 transform rotate-45" />
-              </button>
             </div>
 
             <div className="space-y-2">
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Exercício</label>
-                <input
-                  type="text"
+          <input
+            type="text"
                   placeholder="Nome do exercício (ex: Stiff)"
-                  value={newExercise.name}
-                  onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-                />
+            value={newExercise.name}
+            onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+          />
               </div>
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Grupo muscular</label>
-                <select
-                  value={newExercise.muscle}
-                  onChange={(e) => setNewExercise(prev => ({ ...prev, muscle: e.target.value }))}
+          <select
+            value={newExercise.muscle}
+            onChange={(e) => setNewExercise(prev => ({ ...prev, muscle: e.target.value }))}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 pr-8 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 appearance-none"
                   style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg fill=\'none\' stroke=\'%23999\' stroke-width=\'2\' viewBox=\'0 0 24 24\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1.25em 1.25em' }}
-                >
-                  <option value="pernas">Pernas</option>
-                  <option value="peito">Peito</option>
-                  <option value="costas">Costas</option>
-                  <option value="ombros">Ombros</option>
-                  <option value="bracos">Braços</option>
-                  <option value="abdomen">Abdômen</option>
-                  <option value="cardio">Cardio</option>
-                  <option value="funcional">Funcional</option>
-                </select>
+          >
+            <option value="pernas">Pernas</option>
+            <option value="peito">Peito</option>
+            <option value="costas">Costas</option>
+            <option value="ombros">Ombros</option>
+            <option value="bracos">Braços</option>
+            <option value="abdomen">Abdômen</option>
+            <option value="cardio">Cardio</option>
+            <option value="funcional">Funcional</option>
+          </select>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -712,23 +732,23 @@ const BibliotecaScreen = (props) => {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-400 mb-1">Repetições</label>
-                  <input
-                    type="text"
+            <input
+              type="text"
                     placeholder="Repetições (ex: 8-10)"
-                    value={newExercise.reps}
-                    onChange={(e) => setNewExercise(prev => ({ ...prev, reps: e.target.value }))}
+              value={newExercise.reps}
+              onChange={(e) => setNewExercise(prev => ({ ...prev, reps: e.target.value }))}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-                  />
+            />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs text-gray-400 mb-1">Peso</label>
-                  <input
-                    type="text"
+            <input
+              type="text"
                     placeholder="Peso (ex: 20kg)"
-                    value={newExercise.weight}
-                    onChange={(e) => setNewExercise(prev => ({ ...prev, weight: e.target.value }))}
+              value={newExercise.weight}
+              onChange={(e) => setNewExercise(prev => ({ ...prev, weight: e.target.value }))}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -740,126 +760,154 @@ const BibliotecaScreen = (props) => {
                     value={newExercise.restTime}
                     onChange={(e) => setNewExercise(prev => ({ ...prev, restTime: e.target.value }))}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
+            />
+          </div>
               </div>
               {/* Abas para imagem */}
               <div className="flex gap-2 mt-3 border-b border-white/10">
-                <button
-                  onClick={() => setImageInputType('url')}
+            <button
+              onClick={() => setImageInputType('url')}
                   className={`flex-1 px-3 py-2 text-sm font-medium transition-colors border-b-2 ${
-                    imageInputType === 'url'
+                imageInputType === 'url' 
                       ? 'border-blue-500 text-blue-400 bg-white/5'
                       : 'border-transparent text-gray-400 bg-transparent'
-                  }`}
+              }`}
                   style={{ borderRadius: '8px 8px 0 0' }}
-                >
-                  Link da Imagem
-                </button>
-                <button
-                  onClick={() => setImageInputType('file')}
+            >
+              Link da Imagem
+            </button>
+            <button
+              onClick={() => setImageInputType('file')}
                   className={`flex-1 px-3 py-2 text-sm font-medium transition-colors border-b-2 ${
-                    imageInputType === 'file'
+                imageInputType === 'file' 
                       ? 'border-blue-500 text-blue-400 bg-white/5'
                       : 'border-transparent text-gray-400 bg-transparent'
-                  }`}
+              }`}
                   style={{ borderRadius: '8px 8px 0 0' }}
-                >
-                  Upload de Arquivo
-                </button>
-              </div>
-              {imageInputType === 'url' ? (
-                <input
-                  type="url"
-                  placeholder="URL da imagem (opcional)"
-                  value={newExercise.image}
-                  onChange={(e) => setNewExercise(prev => ({ ...prev, image: e.target.value }))}
+            >
+              Upload de Arquivo
+            </button>
+          </div>
+          {imageInputType === 'url' ? (
+            <input
+              type="url"
+              placeholder="URL da imagem (opcional)"
+              value={newExercise.image}
+              onChange={(e) => setNewExercise(prev => ({ ...prev, image: e.target.value }))}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 mt-2"
-                />
-              ) : (
+            />
+          ) : (
                 <div className="space-y-2 mt-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white hover:bg-white/20 transition-colors focus:outline-none focus:border-blue-500"
-                  >
-                    Escolher Imagem
-                  </button>
-                </div>
-              )}
-              {newExercise.image && (
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white hover:bg-white/20 transition-colors focus:outline-none focus:border-blue-500"
+              >
+                Escolher Imagem
+              </button>
+            </div>
+          )}
+          {newExercise.image && (
                 <div className="w-full h-32 rounded-lg overflow-hidden bg-white/5 mt-3">
+              <img 
+                src={newExercise.image} 
+                alt="Preview" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                      if (e.target) e.target.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
+              <PillButton onClick={handleSubmit} variant="primary" className="w-full mt-4">
+                {editingId ? 'Salvar Alterações' : 'Adicionar Exercício'}
+          </PillButton>
+        </div>
+          </div>
+        )}
+        {/* Lista de Exercícios */}
+        <DragDropContext
+          onDragEnd={(result) => {
+            if (!result.destination) return;
+            const reordered = Array.from(exerciciosOrdenados);
+            const [removed] = reordered.splice(result.source.index, 1);
+            reordered.splice(result.destination.index, 0, removed);
+            // Atualizar ordem local (apenas visual, não persiste no banco ainda)
+            props.setWorkoutPlan(prev => ({
+              ...prev,
+              [props.selectedDay]: reordered.map((ex, idx) => {
+                const workoutItem = (prev[props.selectedDay] || []).find(item => item.exerciseId === ex.id);
+                return workoutItem ? { ...workoutItem, order: idx } : { exerciseId: ex.id, sets: 3, completedSets: 0, restTime: 60, order: idx };
+              })
+            }));
+          }}
+        >
+          <Droppable droppableId="exerciciosDoDia">
+            {(provided) => (
+              <div className="space-y-4" ref={provided.innerRef} {...provided.droppableProps}>
+                {exerciciosOrdenados.map((exercise, index) => {
+                  const workoutItem = (props.workoutPlan[props.selectedDay] || []).find(item => item.exerciseId === exercise.id);
+                  const sets = workoutItem ? workoutItem.sets : 3;
+                  const parsedData = parseExerciseData(exercise);
+                  return (
+                    <Draggable key={exercise.id} draggableId={exercise.id.toString()} index={index}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className={`bg-white/5 rounded-lg p-4 text-white flex gap-3 items-center cursor-pointer hover:bg-white/10 transition-colors group border border-white/10 ${editingId === exercise.id ? 'ring-2 ring-blue-500' : ''} ${snapshot.isDragging ? 'ring-2 ring-blue-400 shadow-lg' : ''}`}
+                          onClick={() => handleEditClick(exercise)}
+                        >
+              {exercise.image && (
+                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                   <img 
-                    src={newExercise.image} 
-                    alt="Preview" 
+                    src={exercise.image} 
+                    alt={exercise.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      if (e.target) e.target.style.display = 'none';
+                                  if (e.target) e.target.style.display = 'none';
                     }}
                   />
                 </div>
               )}
-              <PillButton onClick={handleSubmit} variant="primary" className="w-full mt-4">
-                {editingId ? 'Salvar Alterações' : 'Adicionar Exercício'}
-              </PillButton>
-            </div>
-          </div>
-        )}
-        {/* Lista de Exercícios */}
-        <div className="space-y-4">
-          {exerciciosDoDia.map(exercise => {
-            const workoutItem = (props.workoutPlan[props.selectedDay] || []).find(item => item.exerciseId === exercise.id);
-            const sets = workoutItem ? workoutItem.sets : 3;
-            const parsedData = parseExerciseData(exercise);
-            return (
-              <div
-                key={exercise.id}
-                className={`bg-white/5 rounded-lg p-4 text-white flex gap-3 items-center cursor-pointer hover:bg-white/10 transition-colors group border border-white/10 ${editingId === exercise.id ? 'ring-2 ring-blue-500' : ''}`}
-                onClick={() => handleEditClick(exercise)}
-              >
-                {exercise.image && (
-                  <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                    <img 
-                      src={exercise.image} 
-                      alt={exercise.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        if (e.target) e.target.style.display = 'none';
-                      }}
-                    />
+              <div className="flex-1 min-w-0">
+                            <div className="font-medium text-lg truncate">{exercise.name}</div>
+                            <div className="text-sm text-gray-400 truncate">
+                              {sets} × {parsedData.reps || '8-10'} reps - {parsedData.weight || '0 kg'}
+                            </div>
+                            <div className="text-xs text-blue-400 mt-1 capitalize">{exercise.muscle}</div>
+                          </div>
+                          <button
+                            className="ml-2 bg-white/10 hover:bg-white/20 text-gray-400 transition-opacity px-2 py-1 rounded-full focus:outline-none"
+                            onClick={e => { e.stopPropagation(); handleDelete(exercise.id); }}
+                            title="Deletar exercício"
+                          >
+                            <Trash className="w-5 h-5" />
+                          </button>
+                        </div>
+                      )}
+                    </Draggable>
+                  );
+                })}
+                {provided.placeholder}
+                {exerciciosOrdenados.length === 0 && (
+                  <div className="text-center py-12">
+                    <Clock className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-400 text-lg">Nenhum exercício para {props.selectedDay}</p>
+                    <p className="text-gray-500 text-sm mt-2">Toque no botão + para adicionar exercícios</p>
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-lg truncate">{exercise.name}</div>
-                  <div className="text-sm text-gray-400 truncate">
-                    {sets} × {parsedData.reps || '8-10'} reps - {parsedData.weight || '0 kg'}
-                  </div>
-                  <div className="text-xs text-blue-400 mt-1 capitalize">{exercise.muscle}</div>
-                </div>
-                <button
-                  className="ml-2 bg-white/10 hover:bg-white/20 text-gray-400 transition-opacity px-2 py-1 rounded-full focus:outline-none"
-                  onClick={e => { e.stopPropagation(); handleDelete(exercise.id); }}
-                  title="Deletar exercício"
-                >
-                  <Trash className="w-5 h-5" />
-                </button>
               </div>
-            );
-          })}
-          {exerciciosDoDia.length === 0 && (
-            <div className="text-center py-12">
-              <Clock className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">Nenhum exercício para {props.selectedDay}</p>
-              <p className="text-gray-500 text-sm mt-2">Toque no botão + para adicionar exercícios</p>
-            </div>
-          )}
-        </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       </div>
     </AppLayout>
   );
@@ -936,19 +984,19 @@ export default function App() {
 
   // Loading state
   if (loading) {
-    return (
+  return (
       <AppLayout>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
             <p className="text-gray-400">Carregando treinos...</p>
-          </div>
+        </div>
         </div>
       </AppLayout>
     );
   }
-
-  return (
+            
+            return (
     <Routes>
       <Route path="/" element={
         <KanbanWorkoutApp
@@ -956,7 +1004,7 @@ export default function App() {
           workoutPlan={workoutPlan}
           selectedDay={selectedDay}
           setSelectedDay={setSelectedDay}
-          onSetComplete={handleSetComplete}
+                onSetComplete={handleSetComplete}
         />
       } />
       <Route path="/biblioteca" element={
