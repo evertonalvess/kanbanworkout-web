@@ -305,6 +305,34 @@ const KanbanWorkoutApp = ({
     }
   }, [selectedDay]);
 
+  // Garantir que o slider sempre mostre o dia de hoje ao montar o componente
+  useEffect(() => {
+    if (instanceRef.current) {
+      const idx = dias.indexOf(selectedDay);
+      // Força o movimento para o slide correto após um pequeno delay
+      setTimeout(() => {
+        if (instanceRef.current && instanceRef.current.track.details.rel !== idx) {
+          instanceRef.current.moveToIdx(idx);
+        }
+      }, 100);
+    }
+  }, []); // Executa apenas uma vez ao montar
+
+  // Garantir que o dia de hoje seja sempre visível no seletor
+  useEffect(() => {
+    const daySelector = document.querySelector('.day-selector');
+    if (daySelector) {
+      const selectedButton = daySelector.querySelector(`[data-day="${selectedDay}"]`);
+      if (selectedButton) {
+        selectedButton.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'nearest', 
+          inline: 'center' 
+        });
+      }
+    }
+  }, [selectedDay]);
+
   const todaysWorkout = workoutPlan[selectedDay] || [];
 
   const handleSetComplete = async (exerciseId, _setIndex, restTime) => {
@@ -372,10 +400,11 @@ const KanbanWorkoutApp = ({
             </div>
           </div>
           {/* Seletor de Dia */}
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide day-selector">
             {dias.map(day => (
               <button
                 key={day}
+                data-day={day}
                 onClick={() => setSelectedDay(day)}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
                   selectedDay === day
@@ -662,10 +691,11 @@ const BibliotecaScreen = (props) => {
         </div>
           </div>
           {/* Seletor de Dia */}
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide day-selector">
             {dias.map(day => (
               <button
                 key={day}
+                data-day={day}
                 onClick={() => props.setSelectedDay(day)}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
                   props.selectedDay === day
@@ -688,7 +718,7 @@ const BibliotecaScreen = (props) => {
               <h2 className="text-xl font-semibold text-white">
                 {editingId ? 'Editar Exercício' : 'Adicionar Exercício'}
               </h2>
-            </div>
+        </div>
 
             <div className="space-y-2">
               <div>

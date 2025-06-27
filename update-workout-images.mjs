@@ -11,42 +11,42 @@ const IMAGES_DIR = './public/Imagens'
 // Lista dos treinos conforme Treinos 2025-05.md
 const workouts = [
   // Domingo
-  { name: 'Agachamento livre', day: 'Domingo', muscle: 'pernas', reps: '8-10', sets: 4, weight: '20 kg', rest_time: 60 },
-  { name: 'Leg press', day: 'Domingo', muscle: 'pernas', reps: '10-12', sets: 4, weight: '50 kg cada lado', rest_time: 60 },
-  { name: 'Cadeira extensora', day: 'Domingo', muscle: 'pernas', reps: '12', sets: 4, weight: '68 kg', rest_time: 60 },
+  { name: 'Agachamento livre', day: 'Domingo', muscle: 'pernas', reps: '8-10', sets: 4, weight: '20kg', rest_time: 60 },
+  { name: 'Leg press', day: 'Domingo', muscle: 'pernas', reps: '10-12', sets: 4, weight: '50kg cada lado', rest_time: 60 },
+  { name: 'Cadeira extensora', day: 'Domingo', muscle: 'pernas', reps: '12', sets: 4, weight: '68kg', rest_time: 60 },
   { name: 'Afundo c/ halteres', day: 'Domingo', muscle: 'pernas', reps: '10 por perna', sets: 3, weight: '', rest_time: 60 },
   { name: 'Panturrilha em pé', day: 'Domingo', muscle: 'pernas', reps: '15', sets: 4, weight: '', rest_time: 60 },
   // Segunda
-  { name: 'Supino reto', day: 'Segunda', muscle: 'peito', reps: '8', sets: 4, weight: '≥ 22 kg', rest_time: 60 },
-  { name: 'Supino inclinado', day: 'Segunda', muscle: 'peito', reps: '10', sets: 4, weight: '17 kg (livre) ou 27 kg (máquina)', rest_time: 60 },
+  { name: 'Supino reto', day: 'Segunda', muscle: 'peito', reps: '8', sets: 4, weight: '22kg', rest_time: 60 },
+  { name: 'Supino inclinado', day: 'Segunda', muscle: 'peito', reps: '10', sets: 4, weight: '17kg (livre) ou 27kg (máquina)', rest_time: 60 },
   { name: 'Crossover', day: 'Segunda', muscle: 'peito', reps: '12', sets: 3, weight: 'Substitui crucifixo 65', rest_time: 60 },
-  { name: 'Tríceps pulley', day: 'Segunda', muscle: 'bracos', reps: '12', sets: 4, weight: '25 kg ou nível 10', rest_time: 60 },
+  { name: 'Tríceps pulley', day: 'Segunda', muscle: 'bracos', reps: '12', sets: 4, weight: '25kg ou nível 10', rest_time: 60 },
   { name: 'Mergulho', day: 'Segunda', muscle: 'bracos', reps: '10', sets: 3, weight: '', rest_time: 60 },
   { name: 'Abdominal meia-bola', day: 'Segunda', muscle: 'abdomen', reps: '15', sets: 4, weight: '', rest_time: 60 },
   // Terça
-  { name: 'Barra fixa', day: 'Terça', muscle: 'costas', reps: 'máx.', sets: 4, weight: '20 kg lastro', rest_time: 60 },
-  { name: 'Remada curvada', day: 'Terça', muscle: 'costas', reps: '10', sets: 4, weight: '35 kg', rest_time: 60 },
-  { name: 'Pulley frente', day: 'Terça', muscle: 'costas', reps: '12', sets: 4, weight: '42 kg', rest_time: 60 },
-  { name: 'Rosca direta', day: 'Terça', muscle: 'bracos', reps: '10', sets: 4, weight: '14 kg', rest_time: 60 },
-  { name: 'Rosca alternada', day: 'Terça', muscle: 'bracos', reps: '12', sets: 3, weight: '12 kg', rest_time: 60 },
+  { name: 'Barra fixa', day: 'Terça', muscle: 'costas', reps: 'máx.', sets: 4, weight: '20kg lastro', rest_time: 60 },
+  { name: 'Remada curvada', day: 'Terça', muscle: 'costas', reps: '10', sets: 4, weight: '35kg', rest_time: 60 },
+  { name: 'Pulley frente', day: 'Terça', muscle: 'costas', reps: '12', sets: 4, weight: '42kg', rest_time: 60 },
+  { name: 'Rosca direta', day: 'Terça', muscle: 'bracos', reps: '10', sets: 4, weight: '14kg', rest_time: 60 },
+  { name: 'Rosca alternada', day: 'Terça', muscle: 'bracos', reps: '12', sets: 3, weight: '12kg', rest_time: 60 },
   { name: 'Abdominal paralela meia-bola', day: 'Terça', muscle: 'abdomen', reps: '15', sets: 4, weight: '', rest_time: 60 },
   // Quinta
-  { name: 'Stiff', day: 'Quinta', muscle: 'pernas', reps: '10', sets: 4, weight: '≥ 40 kg', rest_time: 60 },
-  { name: 'Mesa flexora', day: 'Quinta', muscle: 'pernas', reps: '12', sets: 4, weight: '≥ 35 kg', rest_time: 60 },
-  { name: 'Levantamento terra', day: 'Quinta', muscle: 'pernas', reps: '8', sets: 3, weight: '≥ 35 kg', rest_time: 60 },
+  { name: 'Stiff', day: 'Quinta', muscle: 'pernas', reps: '10', sets: 4, weight: '40kg', rest_time: 60 },
+  { name: 'Mesa flexora', day: 'Quinta', muscle: 'pernas', reps: '12', sets: 4, weight: '35kg', rest_time: 60 },
+  { name: 'Levantamento terra', day: 'Quinta', muscle: 'pernas', reps: '8', sets: 3, weight: '35kg', rest_time: 60 },
   { name: 'Panturrilha sentada', day: 'Quinta', muscle: 'pernas', reps: '15', sets: 4, weight: '', rest_time: 60 },
-  { name: 'Passada', day: 'Quinta', muscle: 'pernas', reps: '10 por perna', sets: 3, weight: '8 kg', rest_time: 60 },
+  { name: 'Passada', day: 'Quinta', muscle: 'pernas', reps: '10 por perna', sets: 3, weight: '8kg', rest_time: 60 },
   { name: 'Abdominal paralela meia-bola', day: 'Quinta', muscle: 'abdomen', reps: '15', sets: 4, weight: '', rest_time: 60 },
   // Sexta
-  { name: 'Supino declinado', day: 'Sexta', muscle: 'peito', reps: '10 (24)', sets: 4, weight: '35 kg', rest_time: 60 },
-  { name: 'Crucifixo reto', day: 'Sexta', muscle: 'peito', reps: '12', sets: 3, weight: '57 kg', rest_time: 60 },
-  { name: 'Elevação lateral', day: 'Sexta', muscle: 'ombros', reps: '12', sets: 4, weight: '8 kg', rest_time: 60 },
-  { name: 'Desenvolvimento c/ halteres', day: 'Sexta', muscle: 'ombros', reps: '10', sets: 3, weight: '18 kg', rest_time: 60 },
-  { name: 'Encolhimento', day: 'Sexta', muscle: 'ombros', reps: '15', sets: 3, weight: '22 kg (halter)', rest_time: 60 },
+  { name: 'Supino declinado', day: 'Sexta', muscle: 'peito', reps: '10', sets: 4, weight: '35kg', rest_time: 60 },
+  { name: 'Crucifixo reto', day: 'Sexta', muscle: 'peito', reps: '12', sets: 3, weight: '57kg', rest_time: 60 },
+  { name: 'Elevação lateral', day: 'Sexta', muscle: 'ombros', reps: '12', sets: 4, weight: '8kg', rest_time: 60 },
+  { name: 'Desenvolvimento com halteres', day: 'Sexta', muscle: 'ombros', reps: '10', sets: 3, weight: '18kg', rest_time: 60 },
+  { name: 'Encolhimento', day: 'Sexta', muscle: 'ombros', reps: '15', sets: 3, weight: '22kg (halter)', rest_time: 60 },
   // Sábado
-  { name: 'Rosca direta barra reta (polia)', day: 'Sábado', muscle: 'bracos', reps: '10', sets: 4, weight: '28 kg', rest_time: 60 },
-  { name: 'Rosca martelo (polia)', day: 'Sábado', muscle: 'bracos', reps: '12', sets: 3, weight: '21 kg', rest_time: 60 },
-  { name: 'Rosca unilateral atrás do corpo (polia)', day: 'Sábado', muscle: 'bracos', reps: '12', sets: 3, weight: '12 kg', rest_time: 60 },
+  { name: 'Rosca direta barra reta (polia)', day: 'Sábado', muscle: 'bracos', reps: '10', sets: 4, weight: '28kg', rest_time: 60 },
+  { name: 'Rosca martelo (polia)', day: 'Sábado', muscle: 'bracos', reps: '12', sets: 3, weight: '21kg', rest_time: 60 },
+  { name: 'Rosca unilateral atrás do corpo (polia)', day: 'Sábado', muscle: 'bracos', reps: '12', sets: 3, weight: '12kg', rest_time: 60 },
   { name: 'Tríceps francês', day: 'Sábado', muscle: 'bracos', reps: '12', sets: 3, weight: '', rest_time: 60 },
   { name: 'Tríceps banco', day: 'Sábado', muscle: 'bracos', reps: '10', sets: 3, weight: '', rest_time: 60 },
   { name: 'Abdominal paralela meia-bola', day: 'Sábado', muscle: 'abdomen', reps: '15', sets: 4, weight: '', rest_time: 60 },
@@ -54,9 +54,32 @@ const workouts = [
 
 function findImage(exerciseName) {
   const files = fs.readdirSync(IMAGES_DIR)
-  const found = files.find(f =>
-    f.toLowerCase() === `${exerciseName.toLowerCase()}.png`
-  )
+  
+  // Normalizar o nome do exercício (remover acentos, converter para minúsculo)
+  const normalizeName = (name) => {
+    return name.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .replace(/[^a-z0-9\s]/g, '') // Remove caracteres especiais exceto espaços
+      .trim()
+  }
+  
+  const normalizedExerciseName = normalizeName(exerciseName)
+  
+  // Primeiro, tentar correspondência exata (case-insensitive)
+  let found = files.find(f => {
+    const fileName = f.replace('.png', '').toLowerCase()
+    return fileName === exerciseName.toLowerCase()
+  })
+  
+  // Se não encontrar, tentar com normalização (sem acentos)
+  if (!found) {
+    found = files.find(f => {
+      const normalizedFileName = normalizeName(f.replace('.png', ''))
+      return normalizedFileName === normalizedExerciseName
+    })
+  }
+  
   return found ? `/Imagens/${found}` : ICON
 }
 
