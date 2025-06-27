@@ -103,7 +103,13 @@ const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplet
   const isCompleted = completedSets === sets && sets > 0;
 
   return (
-    <div className="bg-white/6 backdrop-blur-sm rounded-2xl p-4 mb-3 border border-white/10">
+    <div className="relative bg-white/6 backdrop-blur-sm rounded-2xl p-4 mb-3 border border-white/10">
+      {/* Timer no canto superior direito */}
+      {showTimer && timerProps && (
+        <div className="absolute top-4 right-4 z-10">
+          <CardRestTimer {...timerProps} />
+        </div>
+      )}
       <div className="flex gap-4 mb-3">
         {/* Imagem do exercício */}
         {exercise.image && (
@@ -118,7 +124,6 @@ const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplet
             />
           </div>
         )}
-        
         <div className="flex justify-between items-start flex-1">
           <div className="flex-1">
             <h3 className="text-white font-semibold text-lg truncate">{exercise.name}</h3>
@@ -135,7 +140,6 @@ const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplet
           </div>
         </div>
       </div>
-      
       {/* Barra de Progresso */}
       <div className="w-full bg-white/10 rounded-full h-2 mb-3">
         <div 
@@ -143,12 +147,6 @@ const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplet
           style={{ width: `${progress}%` }}
         />
       </div>
-
-      {/* Timer regressivo dentro do card */}
-      {showTimer && timerProps && (
-        <CardRestTimer {...timerProps} />
-      )}
-
       <div className="flex justify-between items-center">
         {sets === 0 ? (
           <PillButton onClick={() => onSetComplete(exercise.id, 0, restTime)} variant="secondary">
