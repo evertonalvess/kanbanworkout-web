@@ -126,8 +126,8 @@ const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplet
         )}
         <div className="flex justify-between items-start flex-1">
           <div className="flex-1">
-            <h3 className="text-white font-semibold text-lg truncate">{exercise.name}</h3>
-            <div className="flex items-center gap-2 mt-1">
+            <h3 className={`text-white font-semibold text-lg ${showTimer ? 'truncate' : ''}`}>{exercise.name}</h3>
+            <div className={`flex items-center gap-2 mt-1 ${showTimer ? 'truncate' : ''}`}>
               <span className="text-xs text-blue-400 font-medium align-middle" style={{lineHeight: '1.5'}}>
                 {gruposMusculares[exercise.muscle] || exercise.muscle}
               </span>
@@ -1032,12 +1032,49 @@ const CardRestTimer = ({ duration, onFinish }) => {
     const interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
     return () => clearInterval(interval);
   }, [timeLeft, onFinish]);
+
+  // Círculo de progresso
+  const size = 56;
+  const strokeWidth = 5;
+  const center = size / 2;
+  const radius = center - strokeWidth / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progress = (timeLeft / duration) * circumference;
+
   return (
-    <div className="flex items-center justify-center my-2">
-      <div className="w-16 h-16 rounded-full border-4 border-blue-500 flex items-center justify-center text-2xl font-mono text-blue-200 bg-blue-900/40">
-        {timeLeft}s
-      </div>
-    </div>
+    <svg width={size} height={size} className="block">
+      <circle
+        cx={center}
+        cy={center}
+        r={radius}
+        stroke="#233"
+        strokeWidth={strokeWidth}
+        fill="none"
+      />
+      <circle
+        cx={center}
+        cy={center}
+        r={radius}
+        stroke="#3b82f6"
+        strokeWidth={strokeWidth}
+        fill="none"
+        strokeDasharray={circumference}
+        strokeDashoffset={circumference - progress}
+        strokeLinecap="round"
+        style={{ transition: 'stroke-dashoffset 0.5s linear' }}
+      />
+      <text
+        x="50%"
+        y="50%"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize="1.5rem"
+        fontWeight="bold"
+        fill="#3b82f6"
+      >
+        {timeLeft}
+      </text>
+    </svg>
   );
 };
 
