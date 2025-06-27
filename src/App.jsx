@@ -98,7 +98,7 @@ const ProgressRing = ({ progress, size = 120, strokeWidth = 8 }) => {
   );
 };
 
-const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplete, onImageClick }) => {
+const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplete, onImageClick, showTimer, timerProps }) => {
   const progress = sets > 0 ? (completedSets / sets) * 100 : 0;
   const isCompleted = completedSets === sets && sets > 0;
 
@@ -121,13 +121,13 @@ const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplet
         
         <div className="flex justify-between items-start flex-1">
           <div className="flex-1">
-            <h3 className="text-white font-semibold text-lg">{exercise.name}</h3>
+            <h3 className="text-white font-semibold text-lg truncate">{exercise.name}</h3>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-xs text-blue-400 font-medium align-middle" style={{lineHeight: '1.5'}}>
                 {gruposMusculares[exercise.muscle] || exercise.muscle}
               </span>
             </div>
-            <p className="text-gray-400 text-sm">{exercise.reps} reps - {exercise.weight}</p>
+            <p className={`text-gray-400 text-sm ${showTimer ? 'truncate' : ''}`}>{exercise.reps} reps - {exercise.weight}</p>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-gray-400 text-sm">{completedSets}/{sets}</span>
@@ -143,6 +143,11 @@ const WorkoutCardView = ({ exercise, sets, completedSets, restTime, onSetComplet
           style={{ width: `${progress}%` }}
         />
       </div>
+
+      {/* Timer regressivo dentro do card */}
+      {showTimer && timerProps && (
+        <CardRestTimer {...timerProps} />
+      )}
 
       <div className="flex justify-between items-center">
         {sets === 0 ? (
@@ -277,6 +282,7 @@ const KanbanWorkoutApp = ({
   const navigate = useNavigate();
   const [restTimer, setRestTimer] = useState(null);
   const [modalImage, setModalImage] = useState(null);
+  const [activeTimer, setActiveTimer] = useState(null);
 
   // Sincronizar slide com selectedDay
   const initialSlide = dias.indexOf(selectedDay);
@@ -330,25 +336,18 @@ const KanbanWorkoutApp = ({
 
   const todaysWorkout = workoutPlan[selectedDay] || [];
 
-  const handleSetComplete = async (exerciseId, _setIndex, restTime) => {
-    try {
-      const currentWorkout = workoutPlan[selectedDay] || [];
-      const workoutItem = currentWorkout.find(item => item.exerciseId === exerciseId);
-      
-      if (workoutItem && workoutItem.completedSets < workoutItem.sets) {
-        await onSetComplete(exerciseId, _setIndex, restTime);
-        
-        // Iniciar timer de descanso
-        setRestTimer({
-          duration: restTime,
-          onComplete: () => setRestTimer(null),
-          onAddTime: () => setRestTimer(prev => ({ ...prev, duration: prev.duration + 15 })),
-          onSkip: () => setRestTimer(null)
-        });
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar progresso:', error);
+  const handleSetCompleteWithTimer = async (exerciseId, setIndex, restTime) => {
+    // Se já existe um timer ativo, só marca a série
+    if (activeTimer) {
+      await onSetComplete(exerciseId, setIndex, restTime);
+      return;
     }
+    setActiveTimer({ exerciseId, setIndex, restTime });
+  };
+
+  const handleTimerFinish = async (exerciseId, setIndex, restTime) => {
+    await onSetComplete(exerciseId, setIndex, restTime);
+    setActiveTimer(null);
   };
 
   const getExerciseById = (id) => exercises.find(ex => ex.id === id);
@@ -430,8 +429,14 @@ const KanbanWorkoutApp = ({
                       sets={workoutItem.sets}
                       completedSets={workoutItem.completedSets}
                       restTime={workoutItem.restTime}
-                      onSetComplete={handleSetComplete}
+                      onSetComplete={(id, idx, rest) => handleSetCompleteWithTimer(id, idx, rest)}
                       onImageClick={() => setModalImage(exercise.image)}
+                      showTimer={activeTimer && activeTimer.exerciseId === exercise.id}
+                      timerProps={activeTimer && activeTimer.exerciseId === exercise.id ? {
+                        duration: activeTimer.restTime,
+                        setIndex: activeTimer.setIndex,
+                        onFinish: () => handleTimerFinish(exercise.id, activeTimer.setIndex, activeTimer.restTime)
+                      } : null}
                     />
                   );
                 })}
@@ -1015,6 +1020,26 @@ const BibliotecaScreen = (props) => {
         </DragDropContext>
       </div>
     </AppLayout>
+  );
+};
+
+// Novo componente CardRestTimer (versão simplificada, pode ser melhorado depois)
+const CardRestTimer = ({ duration, onFinish }) => {
+  const [timeLeft, setTimeLeft] = useState(duration);
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      onFinish();
+      return;
+    }
+    const interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
+    return () => clearInterval(interval);
+  }, [timeLeft, onFinish]);
+  return (
+    <div className="flex items-center justify-center my-2">
+      <div className="w-16 h-16 rounded-full border-4 border-blue-500 flex items-center justify-center text-2xl font-mono text-blue-200 bg-blue-900/40">
+        {timeLeft}s
+      </div>
+    </div>
   );
 };
 
