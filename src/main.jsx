@@ -4,6 +4,7 @@ import App from './App.jsx'
 import SplashScreen from './SplashScreen.jsx'
 import './index.css'
 import { BrowserRouter } from 'react-router-dom'
+import { AuthProvider } from './auth/AuthContext.jsx'
 
 function Root() {
   const [showSplash, setShowSplash] = useState(true)
@@ -19,7 +20,9 @@ function Root() {
 
   return (
     <BrowserRouter>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </BrowserRouter>
   )
 }

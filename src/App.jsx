@@ -5,6 +5,10 @@ import { useKeenSlider } from 'keen-slider/react';
 import 'keen-slider/keen-slider.min.css';
 import { useSupabase } from './hooks/useSupabase';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import LoginPage from './LoginPage.jsx';
+import AdminPage from './AdminPage.jsx';
+import UserMenu from './UserMenu.jsx';
+import { useAuth } from './auth/AuthContext.jsx';
 
 // Tokens do Sistema de Design
 const theme = {
@@ -384,12 +388,13 @@ const KanbanWorkoutApp = ({
               {/* Gradiente para indicar overflow */}
               <div className="pointer-events-none absolute right-0 top-0 h-full w-12" style={{background: 'linear-gradient(to right, transparent, '+theme.colors.background.primary+' 80%)'}} />
             </div>
-            {/* Botão + sempre visível */}
-            <div className="flex-shrink-0 ml-2 z-10 absolute right-0 top-1/2 -translate-y-1/2">
-              <IconButton onClick={() => navigate('/biblioteca')}>
-                <Plus className="w-5 h-5 text-white" />
-              </IconButton>
-            </div>
+              {/* Botão + e menu de usuário */}
+              <div className="flex-shrink-0 ml-2 z-10 absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                <IconButton onClick={() => navigate('/biblioteca')}>
+                  <Plus className="w-5 h-5 text-white" />
+                </IconButton>
+                <UserMenu />
+              </div>
           </div>
           {/* Seletor de Dia */}
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide day-selector">
@@ -1080,6 +1085,14 @@ const CardRestTimer = ({ duration, onFinish }) => {
 
 export default function App() {
   // Estados e handlers principais centralizados aqui
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user && window.location.pathname !== '/login') {
+      navigate('/login');
+    }
+  }, [user]);
   const getCurrentDay = () => {
     const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     return days[new Date().getDay()];
@@ -1163,28 +1176,30 @@ export default function App() {
   }
             
             return (
-    <Routes>
-      <Route path="/" element={
-        <KanbanWorkoutApp
-          exercises={exercises}
-          workoutPlan={workoutPlan}
-          selectedDay={selectedDay}
-          setSelectedDay={setSelectedDay}
+      <Routes>
+        <Route path="/" element={
+          <KanbanWorkoutApp
+            exercises={exercises}
+            workoutPlan={workoutPlan}
+            selectedDay={selectedDay}
+            setSelectedDay={setSelectedDay}
                 onSetComplete={handleSetComplete}
-        />
-      } />
-      <Route path="/biblioteca" element={
-        <BibliotecaScreen
-          exercises={exercises}
-          onAddExercise={handleAddExercise}
-          onEditExercise={handleEditExercise}
-          onDeleteExercise={handleDeleteExercise}
-          selectedDay={selectedDay}
-          setSelectedDay={setSelectedDay}
-          workoutPlan={workoutPlan}
-          setWorkoutPlan={setWorkoutPlan}
-        />
-      } />
-    </Routes>
+          />
+        } />
+        <Route path="/biblioteca" element={
+          <BibliotecaScreen
+            exercises={exercises}
+            onAddExercise={handleAddExercise}
+            onEditExercise={handleEditExercise}
+            onDeleteExercise={handleDeleteExercise}
+            selectedDay={selectedDay}
+            setSelectedDay={setSelectedDay}
+            workoutPlan={workoutPlan}
+            setWorkoutPlan={setWorkoutPlan}
+          />
+        } />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/admin" element={<AdminPage />} />
+      </Routes>
   );
 }
